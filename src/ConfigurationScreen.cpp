@@ -102,6 +102,11 @@ void ConfigurationScreen::render() {
   gfx.setFont(u8g2_font_courB14_tr);
   gfx.setCursor(textLeftMargin + 30, currentY);
   gfx.print(ConfigurationServer::WIFI_AP_NAME);
+  currentY += 30;
+
+  gfx.setFont(u8g2_font_courB14_tr);
+  gfx.setCursor(textLeftMargin + 30, currentY);
+  gfx.print("Portal IP: 192.168.4.1");
   currentY += lineSpacing;
 
   gfx.setFont(u8g2_font_fur17_tr);
