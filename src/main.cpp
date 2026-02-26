@@ -24,12 +24,13 @@ DisplayType display;
 void goToSleep(uint64_t sleepTimeInSeconds);
 int displayCurrentScreen(bool wifiConnected);
 bool isButtonWakeup();
-void updateConfiguration(const Configuration& config);
+void updateConfiguration(const Configuration &config);
 void initializeDefaultConfig();
 
 bool isButtonWakeup() {
   esp_sleep_wakeup_cause_t wakeupReason = esp_sleep_get_wakeup_cause();
-  Serial.printf("Wakeup cause: %d (EXT0=%d, TIMER=%d)\n", wakeupReason, ESP_SLEEP_WAKEUP_EXT0, ESP_SLEEP_WAKEUP_TIMER);
+  Serial.printf("Wakeup cause: %d (EXT0=%d, TIMER=%d)\n", wakeupReason,
+                ESP_SLEEP_WAKEUP_EXT0, ESP_SLEEP_WAKEUP_TIMER);
   return (wakeupReason == ESP_SLEEP_WAKEUP_EXT0);
 }
 
@@ -44,7 +45,8 @@ int displayCurrentScreen(bool wifiConnected) {
     ConfigurationScreen configurationScreen(display);
     configurationScreen.render();
 
-    Configuration currentConfig = Configuration(appConfig->wifiSSID, appConfig->wifiPassword, appConfig->imageUrl);
+    Configuration currentConfig = Configuration(
+        appConfig->wifiSSID, appConfig->wifiPassword, appConfig->imageUrl);
     ConfigurationServer configurationServer(currentConfig);
 
     configurationServer.run(updateConfiguration);
@@ -63,19 +65,22 @@ int displayCurrentScreen(bool wifiConnected) {
   }
 }
 
-void updateConfiguration(const Configuration& config) {
+void updateConfiguration(const Configuration &config) {
   if (config.ssid.length() >= sizeof(appConfig->wifiSSID)) {
-    Serial.println("Error: SSID too long, maximum length is " + String(sizeof(appConfig->wifiSSID) - 1));
+    Serial.println("Error: SSID too long, maximum length is " +
+                   String(sizeof(appConfig->wifiSSID) - 1));
     return;
   }
 
   if (config.password.length() >= sizeof(appConfig->wifiPassword)) {
-    Serial.println("Error: Password too long, maximum length is " + String(sizeof(appConfig->wifiPassword) - 1));
+    Serial.println("Error: Password too long, maximum length is " +
+                   String(sizeof(appConfig->wifiPassword) - 1));
     return;
   }
 
   if (config.imageUrl.length() >= sizeof(appConfig->imageUrl)) {
-    Serial.println("Error: Image URL too long, maximum length is " + String(sizeof(appConfig->imageUrl) - 1));
+    Serial.println("Error: Image URL too long, maximum length is " +
+                   String(sizeof(appConfig->imageUrl) - 1));
     return;
   }
 
@@ -83,9 +88,12 @@ void updateConfiguration(const Configuration& config) {
   memset(appConfig->wifiPassword, 0, sizeof(appConfig->wifiPassword));
   memset(appConfig->imageUrl, 0, sizeof(appConfig->imageUrl));
 
-  strncpy(appConfig->wifiSSID, config.ssid.c_str(), sizeof(appConfig->wifiSSID) - 1);
-  strncpy(appConfig->wifiPassword, config.password.c_str(), sizeof(appConfig->wifiPassword) - 1);
-  strncpy(appConfig->imageUrl, config.imageUrl.c_str(), sizeof(appConfig->imageUrl) - 1);
+  strncpy(appConfig->wifiSSID, config.ssid.c_str(),
+          sizeof(appConfig->wifiSSID) - 1);
+  strncpy(appConfig->wifiPassword, config.password.c_str(),
+          sizeof(appConfig->wifiPassword) - 1);
+  strncpy(appConfig->imageUrl, config.imageUrl.c_str(),
+          sizeof(appConfig->imageUrl) - 1);
 
   // Save configuration to persistent storage
   bool saved = configStorage.save(*appConfig);
@@ -97,7 +105,9 @@ void updateConfiguration(const Configuration& config) {
 
   Serial.println("Configuration updated");
   Serial.println("WiFi SSID: " + String(appConfig->wifiSSID));
-  Serial.println("Image URL: " + String(strlen(appConfig->imageUrl) > 0 ? appConfig->imageUrl : "[NOT SET]"));
+  Serial.println("Image URL: " + String(strlen(appConfig->imageUrl) > 0
+                                            ? appConfig->imageUrl
+                                            : "[NOT SET]"));
 
   Serial.println("Rebooting device to apply new configuration...");
   delay(1000);
@@ -105,7 +115,8 @@ void updateConfiguration(const Configuration& config) {
 }
 
 void goToSleep(uint64_t sleepTimeInSeconds) {
-  Serial.println("Going to deep sleep for " + String(sleepTimeInSeconds) + " seconds");
+  Serial.println("Going to deep sleep for " + String(sleepTimeInSeconds) +
+                 " seconds");
   Serial.println("Timer-only wakeup (button wakeup disabled for testing)");
 
   uint64_t sleepTimeMicros = sleepTimeInSeconds * 1000000ULL;
@@ -119,7 +130,9 @@ void initializeDefaultConfig() {
     appConfig = std::move(storedConfig);
     Serial.println("Configuration loaded from persistent storage: ");
     Serial.printf("  - WiFi SSID: %s\n", appConfig->wifiSSID);
-    Serial.printf("  - Image URL: %s\n", strlen(appConfig->imageUrl) > 0 ? appConfig->imageUrl : "[NOT SET]");
+    Serial.printf("  - Image URL: %s\n", strlen(appConfig->imageUrl) > 0
+                                             ? appConfig->imageUrl
+                                             : "[NOT SET]");
   } else {
     appConfig.reset(new ApplicationConfig());
     Serial.println("Using default configuration (no stored config found)");
@@ -134,14 +147,15 @@ void setup() {
 
   initializeDefaultConfig();
 
-  // Note: SPI and GPIO are initialized by DisplayAdapter::init() via the manufacturer driver.
-  // No need for manual SPI.begin() or boards.h pin setup.
+  // Note: SPI and GPIO are initialized by DisplayAdapter::init() via the
+  // manufacturer driver. No need for manual SPI.begin() or boards.h pin setup.
 
   // Try to connect to WiFi if we have valid credentials
   WiFiConnection wifi(appConfig->wifiSSID, appConfig->wifiPassword);
+
   if (appConfig->hasValidWiFiCredentials()) {
-    Serial.printf("WiFi credentials loaded: SSID='%s', Password length=%d\n", appConfig->wifiSSID,
-                  strlen(appConfig->wifiPassword));
+    Serial.printf("WiFi credentials loaded: SSID='%s', Password length=%d\n",
+                  appConfig->wifiSSID, strlen(appConfig->wifiPassword));
     wifi.connect();
   }
 
