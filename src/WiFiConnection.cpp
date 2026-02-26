@@ -1,7 +1,9 @@
 #include "WiFiConnection.h"
 
+#include <Arduino.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
+
 
 #include "boards.h"
 
@@ -17,25 +19,26 @@ void WiFiConnection::connect() {
     return;
   }
 
-  // Explicitly set the device to Station mode (client).
+  // Completely wipe any previous states (fixes AP-mode interference)
+  WiFi.disconnect(true, true);
+  delay(500);
+
+  // Explicitly set to Station mode ONLY
   WiFi.mode(WIFI_STA);
-
-  // Force a disconnect and clear out any cached static IP settings
-  // This ensures the device requests a fresh DHCP lease from the router.
-  WiFi.disconnect(false, true);
   delay(100);
-  WiFi.config(IPAddress(0, 0, 0, 0), IPAddress(0, 0, 0, 0),
-              IPAddress(0, 0, 0, 0));
 
+  // Begin standard connection
   WiFi.begin(_ssid, _password);
 
   int attempts = 0;
-  const int maxAttempts = 20;
+  // Give it slightly more time to negotiate DHCP (15 seconds total)
+  const int maxAttempts = 30;
   while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts) {
     delay(500);
+    Serial.print(".");
     attempts++;
-    yield();
   }
+  Serial.println();
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("Connected to WiFi");
