@@ -1,6 +1,9 @@
 #include "battery.h"
 
 String getBatteryStatus() {
+  if (BATTERY_PIN == -1) {
+    return "N/A";
+  }
   int rawValue = analogRead(BATTERY_PIN);
   // Convert to voltage (ESP32 ADC is 12-bit, 0-3.3V)
   float voltage = (rawValue * 3.3) / 4095.0;

@@ -5,25 +5,27 @@
 #include "ConfigurationServer.h"
 #include "HardwareSerial.h"
 
-ConfigurationScreen::ConfigurationScreen(DisplayType& display)
-    : display(display),
-      accessPointName(ConfigurationServer::WIFI_AP_NAME),
+ConfigurationScreen::ConfigurationScreen(DisplayType &display)
+    : display(display), accessPointName(ConfigurationServer::WIFI_AP_NAME),
       accessPointPassword(ConfigurationServer::WIFI_AP_PASSWORD) {
   gfx.begin(display);
 }
 
 String ConfigurationScreen::generateWiFiQRString() const {
-  String wifiQRCodeString = "WIFI:T:WPA2;S:" + accessPointName + ";P:" + accessPointPassword + ";H:false;;";
+  String wifiQRCodeString = "WIFI:T:WPA2;S:" + accessPointName +
+                            ";P:" + accessPointPassword + ";H:false;;";
   return wifiQRCodeString;
 }
 
-void ConfigurationScreen::drawQRCode(const String& wifiString, int x, int y, int scale) {
+void ConfigurationScreen::drawQRCode(const String &wifiString, int x, int y,
+                                     int scale) {
   const uint8_t qrCodeVersion4 = 4;
   uint8_t qrCodeDataBuffer[qrcode_getBufferSize(qrCodeVersion4)];
   QRCode qrCodeInstance;
 
   int qrGenerationResult =
-      qrcode_initText(&qrCodeInstance, qrCodeDataBuffer, qrCodeVersion4, ECC_MEDIUM, wifiString.c_str());
+      qrcode_initText(&qrCodeInstance, qrCodeDataBuffer, qrCodeVersion4,
+                      ECC_MEDIUM, wifiString.c_str());
 
   if (qrGenerationResult != 0) {
     Serial.print("Failed to generate QR code, error: ");
@@ -35,7 +37,8 @@ void ConfigurationScreen::drawQRCode(const String& wifiString, int x, int y, int
 
   for (uint8_t qrModuleY = 0; qrModuleY < qrCodeInstance.size; qrModuleY++) {
     for (uint8_t qrModuleX = 0; qrModuleX < qrCodeInstance.size; qrModuleX++) {
-      bool moduleIsBlack = qrcode_getModule(&qrCodeInstance, qrModuleX, qrModuleY);
+      bool moduleIsBlack =
+          qrcode_getModule(&qrCodeInstance, qrModuleX, qrModuleY);
       if (moduleIsBlack) {
         blackModules++;
         int rectX = x + (qrModuleX * scale);
@@ -51,7 +54,8 @@ void ConfigurationScreen::render() {
 
   display.init(115200);
   display.setRotation(ApplicationConfig::DISPLAY_ROTATION);
-  Serial.printf("Display dimensions: %d x %d\n", display.width(), display.height());
+  Serial.printf("Display dimensions: %d x %d\n", display.width(),
+                display.height());
 
   const int textLeftMargin = 40;
   const int titleFontSize = 24;
@@ -116,7 +120,8 @@ void ConfigurationScreen::render() {
   int qrBgY = qrCodeY - qrCodeQuietZone;
   int qrBgSize = qrCodePixelSize + (2 * qrCodeQuietZone);
 
-  display.fillRect(qrBgX - 5, qrBgY - 5, qrBgSize + 10, qrBgSize + 10, GxEPD_RED);
+  display.fillRect(qrBgX - 5, qrBgY - 5, qrBgSize + 10, qrBgSize + 10,
+                   GxEPD_RED);
   display.fillRect(qrBgX, qrBgY, qrBgSize, qrBgSize, GxEPD_WHITE);
 
   drawQRCode(wifiQRCodeString, qrCodeX, qrCodeY, qrCodeScale);
