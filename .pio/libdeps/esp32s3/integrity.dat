@@ -1,0 +1,11 @@
+olikraus/U8g2@^2.36.5
+WiFi
+adafruit/Adafruit GFX Library@^1.11.5
+https://github.com/olikraus/U8g2_for_Adafruit_GFX.git
+https://github.com/ESP32Async/ESPAsyncWebServer.git
+https://github.com/ESP32Async/AsyncTCP.git
+SPIFFS
+DNSServer
+HTTPClient
+FS
+ricmoo/qrcode@^0.0.1

@@ -5,7 +5,7 @@
 
 #include "boards.h"
 
-WiFiConnection::WiFiConnection(const char* ssid, const char* password)
+WiFiConnection::WiFiConnection(const char *ssid, const char *password)
     : _ssid(ssid), _password(password), connected(false) {}
 
 void WiFiConnection::connect() {
@@ -16,6 +16,16 @@ void WiFiConnection::connect() {
     connected = true;
     return;
   }
+
+  // Explicitly set the device to Station mode (client).
+  WiFi.mode(WIFI_STA);
+
+  // Force a disconnect and clear out any cached static IP settings
+  // This ensures the device requests a fresh DHCP lease from the router.
+  WiFi.disconnect(false, true);
+  delay(100);
+  WiFi.config(IPAddress(0, 0, 0, 0), IPAddress(0, 0, 0, 0),
+              IPAddress(0, 0, 0, 0));
 
   WiFi.begin(_ssid, _password);
 
