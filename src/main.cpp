@@ -141,7 +141,8 @@ void initializeDefaultConfig() {
 
 void setup() {
   delay(1000);
-  Serial.begin(115200);
+  // Match platformio.ini monitor_speed to avoid unreadable serial output.
+  Serial.begin(460800);
 
   Serial.println("ESP32-133C02 E-Ink Spectra 6 (13.3\") starting...");
 
