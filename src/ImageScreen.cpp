@@ -236,15 +236,55 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::decodeJPG(uint8_t *data,
 static uint16_t *pngRgb565Buffer = nullptr;
 
 static int pngDrawCallback(PNGDRAW *pDraw) {
+  // Bounds check: skip lines outside our 1200x1600 framebuffer
+  if (pDraw->y >= 1600)
+    return 1;
+
+  // Use a temp buffer for the full PNG row (may be wider than 1200)
+  // Then copy only the first 1200 pixels (or fewer) to our framebuffer
+  int srcWidth = pDraw->iWidth;
+  int copyWidth = (srcWidth > 1200) ? 1200 : srcWidth;
+
+  // Allocate temp buffer on stack for one row (max 2400px = 4800 bytes)
+  uint16_t tempLine[2400];
   PNG *png = (PNG *)pDraw->pUser;
-  png->getLineAsRGB565(pDraw, &pngRgb565Buffer[pDraw->y * 1200],
-                       PNG_RGB565_LITTLE_ENDIAN, 0xFFFFFFFF);
+  png->getLineAsRGB565(pDraw, tempLine, PNG_RGB565_LITTLE_ENDIAN, 0xFFFFFFFF);
+
+  // Copy only the cropped width into our framebuffer
+  memcpy(&pngRgb565Buffer[pDraw->y * 1200], tempLine,
+         copyWidth * sizeof(uint16_t));
   return 1;
 }
 
-std::unique_ptr<ColorImageBitmaps> ImageScreen::decodePNG(uint8_t *data,
-                                                          size_t dataSize) {
-  Serial.println("Decoding PNG...");
+static void *pngOpenCallback(const char *filename, int32_t *size) {
+  File *file = (File *)filename;
+  *size = file->size();
+  return (void *)file;
+}
+
+static void pngCloseCallback(void *handle) {
+  // File must remain open for ImageScreen to process it or close it, so do
+  // nothing here
+}
+
+static int32_t pngReadCallback(PNGFILE *hFile, uint8_t *pBuf, int32_t iLen) {
+  File *file = (File *)hFile->fHandle;
+  return file->read(pBuf, iLen);
+}
+
+static int32_t pngSeekCallback(PNGFILE *hFile, int32_t iPosition) {
+  File *file = (File *)hFile->fHandle;
+  return file->seek(iPosition) ? iPosition : 0;
+}
+
+std::unique_ptr<ColorImageBitmaps> ImageScreen::decodePNG(File &file) {
+  Serial.println("Decoding PNG (Streaming from LittleFS)...");
+
+  // Ensure file is at position 0
+  file.seek(0);
+  Serial.printf("LittleFS file size: %d, position: %d\n", file.size(),
+                file.position());
+
   pngRgb565Buffer = (uint16_t *)ps_malloc(1200 * 1600 * 2);
   if (!pngRgb565Buffer) {
     Serial.println("Failed to allocate PSRAM for PNG RGB565 buffer");
@@ -252,26 +292,86 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::decodePNG(uint8_t *data,
   }
   memset(pngRgb565Buffer, 0xFFFF, 1200 * 1600 * 2);
 
-  PNG png;
-  int rc = png.openRAM(data, dataSize, pngDrawCallback);
+  // Allocate PNG state on the heap to prevent stack overflow! (PNG state is
+  // very large)
+  PNG *png = new PNG();
+
+  int rc = png->open((const char *)&file, pngOpenCallback, pngCloseCallback,
+                     pngReadCallback, pngSeekCallback, pngDrawCallback);
   if (rc != PNG_SUCCESS) {
-    Serial.println("PNG open failed");
+    Serial.printf("PNG open failed (rc=%d, err=%d)\n", rc, png->getLastError());
     free(pngRgb565Buffer);
+    pngRgb565Buffer = nullptr;
+    delete png;
     return nullptr;
   }
 
-  Serial.printf("PNG Size: %dx%d, Type: %d\n", png.getWidth(), png.getHeight(),
-                png.getPixelType());
+  int imgW = png->getWidth();
+  int imgH = png->getHeight();
+  int imgType = png->getPixelType();
+  Serial.printf("PNG Size: %dx%d, Type: %d, BPP: %d, Alpha: %d\n", imgW, imgH,
+                imgType, png->getBpp(), png->hasAlpha());
 
-  rc = png.decode((void *)&png, 0);
+  // Safety: check if image is too wide for our buffer
+  if (imgW > 1200 || imgH > 1600) {
+    Serial.printf("WARNING: PNG dimensions %dx%d exceed 1200x1600 buffer!\n",
+                  imgW, imgH);
+  }
+
+  rc = png->decode((void *)png, 0);
   if (rc != PNG_SUCCESS) {
-    Serial.println("PNG decode failed");
+    Serial.printf("PNG decode failed (rc=%d, err=%d)\n", rc,
+                  png->getLastError());
     free(pngRgb565Buffer);
+    pngRgb565Buffer = nullptr;
+    delete png;
     return nullptr;
   }
 
   auto bitmaps = ditherImage(pngRgb565Buffer, 1200, 1600);
   free(pngRgb565Buffer);
+  pngRgb565Buffer = nullptr;
+  delete png;
+  return bitmaps;
+}
+
+std::unique_ptr<ColorImageBitmaps> ImageScreen::decodePNG(uint8_t *data,
+                                                          size_t dataSize) {
+  Serial.println("Decoding PNG (RAM)...");
+  pngRgb565Buffer = (uint16_t *)ps_malloc(1200 * 1600 * 2);
+  if (!pngRgb565Buffer) {
+    Serial.println("Failed to allocate PSRAM for PNG RGB565 buffer");
+    return nullptr;
+  }
+  memset(pngRgb565Buffer, 0xFFFF, 1200 * 1600 * 2);
+
+  PNG *png = new PNG();
+
+  int rc = png->openRAM(data, dataSize, pngDrawCallback);
+  if (rc != PNG_SUCCESS) {
+    Serial.println("PNG open failed");
+    free(pngRgb565Buffer);
+    delete png;
+    return nullptr;
+  }
+
+  Serial.printf("PNG Size: %dx%d, Type: %d\n", png->getWidth(),
+                png->getHeight(), png->getPixelType());
+
+  rc = png->decode((void *)png, 0);
+  if (rc != PNG_SUCCESS) {
+    Serial.printf("PNG decode failed (RAM) (rc=%d, err=%d)\n", rc,
+                  png->getLastError());
+    free(pngRgb565Buffer);
+    pngRgb565Buffer = nullptr;
+    delete png;
+    return nullptr;
+  }
+
+  auto bitmaps = ditherImage(pngRgb565Buffer, 1200, 1600);
+  free(pngRgb565Buffer);
+  pngRgb565Buffer = nullptr;
+  delete png;
   return bitmaps;
 }
 
@@ -448,6 +548,14 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::loadFromLittleFS() {
   if (!file) {
     printf("Failed to open %s for reading.\r\n", filename.c_str());
     return nullptr;
+  }
+
+  if (filename.endsWith(".png")) {
+    printf("Streaming PNG image directly from LittleFS to "
+           "processImageData...\r\n");
+    auto bitmaps = decodePNG(file);
+    file.close();
+    return bitmaps;
   }
 
   size_t fileSize = file.size();

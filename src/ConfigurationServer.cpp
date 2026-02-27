@@ -8,7 +8,7 @@ const char *ConfigurationServer::WIFI_AP_NAME = "Framey-Config";
 const char *ConfigurationServer::WIFI_AP_PASSWORD = "configure123";
 
 ConfigurationServer::ConfigurationServer(const Configuration &currentConfig)
-    : deviceName("LilyGo-Weather-Station"), wifiAccessPointName(WIFI_AP_NAME),
+    : deviceName("E-Ink-Display"), wifiAccessPointName(WIFI_AP_NAME),
       wifiAccessPointPassword(WIFI_AP_PASSWORD),
       currentConfiguration(currentConfig), server(nullptr), dnsServer(nullptr),
       isServerRunning(false) {}
