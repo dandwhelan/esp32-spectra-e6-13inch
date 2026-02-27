@@ -131,10 +131,10 @@ void ConfigurationServer::setupWebServer() {
 
   server->on(
       "/upload", HTTP_POST,
-      [](AsyncWebServerRequest *request) {
-        request->send(
-            200, "text/plain",
-            "Upload successful! Image will be displayed on next boot.");
+      [this](AsyncWebServerRequest *request) {
+        newImageUploaded = true;
+        request->send(200, "text/plain",
+                      "Upload successful! Refreshing display...");
       },
       [this](AsyncWebServerRequest *request, const String &filename,
              size_t index, uint8_t *data, size_t len, bool final) {

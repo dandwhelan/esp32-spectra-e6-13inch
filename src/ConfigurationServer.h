@@ -37,6 +37,10 @@ public:
   String getWifiAccessPointName() const;
   String getWifiAccessPointPassword() const;
 
+  // Returns true if a new image was uploaded since last check
+  bool hasNewImage() const { return newImageUploaded; }
+  void clearNewImage() { newImageUploaded = false; }
+
 private:
   String deviceName;
   String wifiAccessPointName;
@@ -47,6 +51,7 @@ private:
   AsyncWebServer *server;
   DNSServer *dnsServer;
   bool isServerRunning;
+  bool newImageUploaded = false;
 
   String htmlTemplate;
   OnSaveCallback onSaveCallback;

@@ -127,6 +127,15 @@ void setup() {
 
     while (millis() - serverStart < SERVER_TIMEOUT_MS) {
       server.handleRequests();
+
+      // Check if a new image was uploaded — refresh display immediately
+      if (server.hasNewImage()) {
+        server.clearNewImage();
+        printf("New image uploaded! Refreshing display...\r\n");
+        displayCurrentScreen(wifi.isConnected());
+        printf("Display refreshed with new image.\r\n");
+      }
+
       delay(10);
     }
 
@@ -165,6 +174,14 @@ void setup() {
 
     while (millis() - serverStart < SERVER_TIMEOUT_MS) {
       server.handleRequests();
+
+      if (server.hasNewImage()) {
+        server.clearNewImage();
+        printf("New image uploaded! Refreshing display...\r\n");
+        displayCurrentScreen(false);
+        printf("Display refreshed with new image.\r\n");
+      }
+
       delay(10);
     }
 
