@@ -65,7 +65,7 @@ private:
   String getStoredImageETag();
   std::unique_ptr<ColorImageBitmaps> loadFromLittleFS();
   std::unique_ptr<ColorImageBitmaps>
-  ditherImage(uint8_t *rgbBuffer, uint32_t width, uint32_t height);
+  ditherImage(uint16_t *rgb565Buffer, uint32_t width, uint32_t height);
   static bool jpgOutput(int16_t x, int16_t y, uint16_t w, uint16_t h,
                         uint16_t *bitmap);
 
