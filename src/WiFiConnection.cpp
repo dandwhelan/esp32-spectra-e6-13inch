@@ -27,11 +27,16 @@ void WiFiConnection::connect() {
 
   connected = false;
 
-  for (int cycle = 1; cycle <= maxConnectionCycles && !connected; cycle++) {
-    Serial.printf("WiFi connect cycle %d/%d\n", cycle, maxConnectionCycles);
+  // Force DHCP client for station mode before begin()
+  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
 
-    // Hard reset WiFi stack state between AP<->STA transitions.
-    WiFi.disconnect(true, true);
+  // Begin standard connection
+  WiFi.begin(_ssid, _password);
+
+  int attempts = 0;
+  // Give it more time to negotiate association + DHCP lease
+  const int maxAttempts = 60;
+  while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts) {
     delay(500);
     WiFi.mode(WIFI_MODE_NULL);
     delay(200);
@@ -75,16 +80,32 @@ void WiFiConnection::connect() {
       continue;
     }
 
-    connected = true;
-    Serial.printf("WiFi connected with DHCP IP: %s\n", localIP.toString().c_str());
-    Serial.printf("Subnet: %s, Gateway: %s, DNS: %s\n", WiFi.subnetMask().toString().c_str(),
-                  WiFi.gatewayIP().toString().c_str(), WiFi.dnsIP().toString().c_str());
-  }
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Connected to WiFi, waiting for DHCP lease...");
 
-  if (!connected) {
-    Serial.println("Failed to obtain WiFi connection with DHCP after retries");
-    WiFi.disconnect(true, true);
-    WiFi.mode(WIFI_MODE_NULL);
+    const uint32_t dhcpStart = millis();
+    const uint32_t dhcpTimeoutMs = 15000;
+    while (WiFi.localIP() == IPAddress(0, 0, 0, 0) && (millis() - dhcpStart) < dhcpTimeoutMs) {
+      delay(250);
+      Serial.print("#");
+    }
+    Serial.println();
+
+    IPAddress localIP = WiFi.localIP();
+    if (localIP != IPAddress(0, 0, 0, 0)) {
+      connected = true;
+      Serial.printf("WiFi connected with DHCP IP: %s\n", localIP.toString().c_str());
+      Serial.printf("Gateway: %s, DNS: %s\n", WiFi.gatewayIP().toString().c_str(),
+                    WiFi.dnsIP().toString().c_str());
+    } else {
+      connected = false;
+      Serial.println("Connected to AP but DHCP lease was not obtained in time");
+      WiFi.disconnect(true, true);
+      WiFi.mode(WIFI_STA);
+    }
+  } else {
+    Serial.println("\nFailed to connect to WiFi");
+    connected = false;
   }
 }
 

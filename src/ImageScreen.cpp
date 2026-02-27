@@ -5,15 +5,13 @@
 
 #include "battery.h"
 
-ImageScreen::ImageScreen(DisplayType& display, ApplicationConfig& config)
-    : display(display),
-      config(config),
-      smallFont(u8g2_font_helvR12_tr),
+ImageScreen::ImageScreen(DisplayType &display, ApplicationConfig &config)
+    : display(display), config(config), smallFont(u8g2_font_helvR12_tr),
       ditheringServiceUrl("https://dither.shvn.dev") {
   gfx.begin(display);
 }
 
-void ImageScreen::storeImageETag(const String& etag) {
+void ImageScreen::storeImageETag(const String &etag) {
   strncpy(storedImageETag, etag.c_str(), sizeof(storedImageETag) - 1);
   storedImageETag[sizeof(storedImageETag) - 1] = '\0';
   Serial.println("Stored ETag in RTC memory: " + etag);
@@ -22,9 +20,12 @@ void ImageScreen::storeImageETag(const String& etag) {
 String ImageScreen::getStoredImageETag() { return String(storedImageETag); }
 
 std::unique_ptr<DownloadResult> ImageScreen::download() {
-  String requestUrl = ditheringServiceUrl + "/process?url=" + downloader.urlEncode(String(config.imageUrl)) +
-                      "&width=" + String(display.width()) + "&height=" + String(display.height()) +
-                      "&dither=true&normalize=false&colors=000000,ffffff,e6e600,cc0000,0033cc,00cc00";
+  String requestUrl = ditheringServiceUrl + "/process?url=" +
+                      downloader.urlEncode(String(config.imageUrl)) +
+                      "&width=" + String(display.width()) +
+                      "&height=" + String(display.height()) +
+                      "&dither=true&normalize=false&colors=000000,ffffff,"
+                      "e6e600,cc0000,0033cc,00cc00";
 
   String storedETag = getStoredImageETag();
   Serial.println("Using stored ETag for request: '" + storedETag + "'");
@@ -37,11 +38,14 @@ std::unique_ptr<DownloadResult> ImageScreen::download() {
   return result;
 }
 
-std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, size_t dataSize) {
+std::unique_ptr<ColorImageBitmaps>
+ImageScreen::processImageData(uint8_t *data, size_t dataSize) {
   size_t dataIndex = 0;
 
   if (dataSize < 54) {
-    Serial.printf("Payload too small for BMP header: got %d bytes, expected at least 54\n", dataSize);
+    Serial.printf("Payload too small for BMP header: got %d bytes, expected at "
+                  "least 54\n",
+                  dataSize);
     return nullptr;
   }
 
@@ -50,30 +54,40 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
   dataIndex += 54;
 
   if (bmpHeader[0] != 'B' || bmpHeader[1] != 'M') {
-    Serial.printf("Invalid BMP signature: got 0x%02X 0x%02X, expected 0x42 0x4D ('BM')\n", bmpHeader[0], bmpHeader[1]);
+    Serial.printf(
+        "Invalid BMP signature: got 0x%02X 0x%02X, expected 0x42 0x4D ('BM')\n",
+        bmpHeader[0], bmpHeader[1]);
     return nullptr;
   }
 
-  uint32_t dataOffset = bmpHeader[10] | (bmpHeader[11] << 8) | (bmpHeader[12] << 16) | (bmpHeader[13] << 24);
-  uint32_t imageWidth = bmpHeader[18] | (bmpHeader[19] << 8) | (bmpHeader[20] << 16) | (bmpHeader[21] << 24);
-  uint32_t imageHeight = bmpHeader[22] | (bmpHeader[23] << 8) | (bmpHeader[24] << 16) | (bmpHeader[25] << 24);
+  uint32_t dataOffset = bmpHeader[10] | (bmpHeader[11] << 8) |
+                        (bmpHeader[12] << 16) | (bmpHeader[13] << 24);
+  uint32_t imageWidth = bmpHeader[18] | (bmpHeader[19] << 8) |
+                        (bmpHeader[20] << 16) | (bmpHeader[21] << 24);
+  uint32_t imageHeight = bmpHeader[22] | (bmpHeader[23] << 8) |
+                         (bmpHeader[24] << 16) | (bmpHeader[25] << 24);
   uint16_t bitsPerPixel = bmpHeader[28] | (bmpHeader[29] << 8);
-  uint32_t compression = bmpHeader[30] | (bmpHeader[31] << 8) | (bmpHeader[32] << 16) | (bmpHeader[33] << 24);
+  uint32_t compression = bmpHeader[30] | (bmpHeader[31] << 8) |
+                         (bmpHeader[32] << 16) | (bmpHeader[33] << 24);
 
   if (bitsPerPixel != 8) {
-    Serial.printf("Unsupported bits per pixel: %d (expected 8 for indexed color)\n", bitsPerPixel);
+    Serial.printf(
+        "Unsupported bits per pixel: %d (expected 8 for indexed color)\n",
+        bitsPerPixel);
     return nullptr;
   }
 
   if (compression != 0) {
-    Serial.printf("Unsupported compression: %d (expected 0 for uncompressed)\n", compression);
+    Serial.printf("Unsupported compression: %d (expected 0 for uncompressed)\n",
+                  compression);
     return nullptr;
   }
 
   // 8-bit BMP has 256 color palette entries, each 4 bytes (BGRA)
   uint32_t paletteSize = 256 * 4;
   if (dataIndex + paletteSize > dataSize) {
-    Serial.printf("Not enough data for color palette: need %d bytes, have %d\n", dataIndex + paletteSize, dataSize);
+    Serial.printf("Not enough data for color palette: need %d bytes, have %d\n",
+                  dataIndex + paletteSize, dataSize);
     return nullptr;
   }
 
@@ -83,7 +97,9 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
   if (dataOffset > dataIndex) {
     uint32_t skipBytes = dataOffset - dataIndex;
     if (dataIndex + skipBytes > dataSize) {
-      Serial.printf("Data offset beyond payload size: offset %d, payload size %d\n", dataOffset, dataSize);
+      Serial.printf(
+          "Data offset beyond payload size: offset %d, payload size %d\n",
+          dataOffset, dataSize);
       return nullptr;
     }
     dataIndex += skipBytes;
@@ -91,11 +107,11 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
 
   // Row size padded to 4-byte boundary
   uint32_t rowSize = ((imageWidth * bitsPerPixel + 31) / 32) * 4;
-  uint8_t* rowBuffer = new uint8_t[rowSize];
+  uint8_t *rowBuffer = new uint8_t[rowSize];
 
   // Create buffer for color pixel data (1 byte per pixel) using PSRAM
   size_t pixelBufferSize = imageWidth * imageHeight;
-  uint8_t* pixelBuffer = (uint8_t*)ps_malloc(pixelBufferSize);
+  uint8_t *pixelBuffer = (uint8_t *)ps_malloc(pixelBufferSize);
   if (!pixelBuffer) {
     Serial.println("Failed to allocate PSRAM for pixel buffer");
     delete[] rowBuffer;
@@ -104,8 +120,9 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
 
   for (int y = imageHeight - 1; y >= 0; y--) {
     if (dataIndex + rowSize > dataSize) {
-      Serial.printf("Not enough data for row %d: need %d bytes, have %d remaining (dataIndex=%d)\n", y, rowSize,
-                    dataSize - dataIndex, dataIndex);
+      Serial.printf("Not enough data for row %d: need %d bytes, have %d "
+                    "remaining (dataIndex=%d)\n",
+                    y, rowSize, dataSize - dataIndex, dataIndex);
       delete[] rowBuffer;
       free(pixelBuffer);
       return nullptr;
@@ -116,7 +133,8 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
       memcpy(rowBuffer, data + dataIndex, rowSize);
     } else {
       // Fill with zeros if we're beyond data bounds (should not happen)
-      Serial.printf("WARNING: Row %d beyond data bounds, filling with zeros\n", y);
+      Serial.printf("WARNING: Row %d beyond data bounds, filling with zeros\n",
+                    y);
       memset(rowBuffer, 0, rowSize);
     }
     dataIndex += rowSize;
@@ -124,7 +142,7 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
     for (int x = 0; x < imageWidth; x++) {
       uint8_t pixelIndex = rowBuffer[x];
       // Map palette indices directly to display colors
-      uint8_t colorIndex = pixelIndex;  // Direct mapping first
+      uint8_t colorIndex = pixelIndex; // Direct mapping first
 
       // We're reading BMP rows from bottom (y=imageHeight-1) to top (y=0)
       // Convert to display coordinates: display_y = (imageHeight-1) - y
@@ -138,7 +156,7 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
 
   // Create bitmap planes for color data
   // Calculate bitmap size in bytes (1 bit per pixel, padded to byte boundary)
-  int bitmapWidthBytes = (imageWidth + 7) / 8;  // Round up to nearest byte
+  int bitmapWidthBytes = (imageWidth + 7) / 8; // Round up to nearest byte
   size_t bitmapSize = bitmapWidthBytes * imageHeight;
 
   // Create ColorImageBitmaps struct
@@ -148,15 +166,21 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
   bitmaps->bitmapSize = bitmapSize;
 
   // Allocate bitmap planes for 7-color display
-  // Palette: 000000,ffffff,e6e600,cc0000,0033cc,00cc00 (Black,White,Yellow,Red,Blue,Green)
-  bitmaps->blackBitmap = (uint8_t*)ps_malloc(bitmapSize);   // Index 0: 000000 (Black)
-  bitmaps->yellowBitmap = (uint8_t*)ps_malloc(bitmapSize);  // Index 2: e6e600 (Yellow)
-  bitmaps->redBitmap = (uint8_t*)ps_malloc(bitmapSize);     // Index 3: cc0000 (Red)
-  bitmaps->blueBitmap = (uint8_t*)ps_malloc(bitmapSize);    // Index 4: 0033cc (Blue)
-  bitmaps->greenBitmap = (uint8_t*)ps_malloc(bitmapSize);   // Index 5: 00cc00 (Green, native support!)
+  // Palette: 000000,ffffff,e6e600,cc0000,0033cc,00cc00
+  // (Black,White,Yellow,Red,Blue,Green)
+  bitmaps->blackBitmap =
+      (uint8_t *)ps_malloc(bitmapSize); // Index 0: 000000 (Black)
+  bitmaps->yellowBitmap =
+      (uint8_t *)ps_malloc(bitmapSize); // Index 2: e6e600 (Yellow)
+  bitmaps->redBitmap =
+      (uint8_t *)ps_malloc(bitmapSize); // Index 3: cc0000 (Red)
+  bitmaps->blueBitmap =
+      (uint8_t *)ps_malloc(bitmapSize); // Index 4: 0033cc (Blue)
+  bitmaps->greenBitmap = (uint8_t *)ps_malloc(
+      bitmapSize); // Index 5: 00cc00 (Green, native support!)
 
-  if (!bitmaps->blackBitmap || !bitmaps->yellowBitmap || !bitmaps->redBitmap || !bitmaps->blueBitmap ||
-      !bitmaps->greenBitmap) {
+  if (!bitmaps->blackBitmap || !bitmaps->yellowBitmap || !bitmaps->redBitmap ||
+      !bitmaps->blueBitmap || !bitmaps->greenBitmap) {
     Serial.println("Failed to allocate PSRAM for bitmap planes");
     free(pixelBuffer);
     return nullptr;
@@ -176,34 +200,37 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
       int bufferIndex = y * imageWidth + x;
       uint8_t colorIndex = pixelBuffer[bufferIndex];
 
-      // Calculate bit position in bitmap - flip Y coordinate to match display rotation
-      int flippedY = (imageHeight - 1) - y;  // Reverse Y coordinate to match 180-degree display rotation
+      // Calculate bit position in bitmap - flip Y coordinate to match display
+      // rotation
+      int flippedY =
+          (imageHeight - 1) -
+          y; // Reverse Y coordinate to match 180-degree display rotation
       int byteIndex = flippedY * bitmapWidthBytes + x / 8;
-      int bitIndex = 7 - (x % 8);  // MSB first
+      int bitIndex = 7 - (x % 8); // MSB first
       uint8_t bitMask = 1 << bitIndex;
 
       // Set appropriate bit in the corresponding color plane
       // Spectra 6 color mapping: 000000,ffffff,e6e600,cc0000,0033cc,00cc00
       switch (colorIndex) {
-        case 0:  // 000000 - Black
-          bitmaps->blackBitmap[byteIndex] |= bitMask;
-          break;
-        case 1:  // ffffff - White (background - no bits set)
-          break;
-        case 2:  // e6e600 - Yellow
-          bitmaps->yellowBitmap[byteIndex] |= bitMask;
-          break;
-        case 3:  // cc0000 - Red
-          bitmaps->redBitmap[byteIndex] |= bitMask;
-          break;
-        case 4:  // 0033cc - Blue
-          bitmaps->blueBitmap[byteIndex] |= bitMask;
-          break;
-        case 5:  // 00cc00 - Green (native green support)
-          bitmaps->greenBitmap[byteIndex] |= bitMask;
-          break;
-        default:
-          break;
+      case 0: // 000000 - Black
+        bitmaps->blackBitmap[byteIndex] |= bitMask;
+        break;
+      case 1: // ffffff - White (background - no bits set)
+        break;
+      case 2: // e6e600 - Yellow
+        bitmaps->yellowBitmap[byteIndex] |= bitMask;
+        break;
+      case 3: // cc0000 - Red
+        bitmaps->redBitmap[byteIndex] |= bitMask;
+        break;
+      case 4: // 0033cc - Blue
+        bitmaps->blueBitmap[byteIndex] |= bitMask;
+        break;
+      case 5: // 00cc00 - Green (native green support)
+        bitmaps->greenBitmap[byteIndex] |= bitMask;
+        break;
+      default:
+        break;
       }
     }
   }
@@ -213,7 +240,7 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::processImageData(uint8_t* data, 
   return bitmaps;
 }
 
-void ImageScreen::renderBitmaps(const ColorImageBitmaps& bitmaps) {
+void ImageScreen::renderBitmaps(const ColorImageBitmaps &bitmaps) {
   // Calculate position to center the image on display
   int displayWidth = display.width();
   int displayHeight = display.height();
@@ -235,11 +262,16 @@ void ImageScreen::renderBitmaps(const ColorImageBitmaps& bitmaps) {
   imageY = max(0, imageY);
 
   // Draw all color bitmaps directly
-  display.drawBitmap(imageX, imageY, bitmaps.blackBitmap, bitmaps.width, bitmaps.height, GxEPD_BLACK);
-  display.drawBitmap(imageX, imageY, bitmaps.yellowBitmap, bitmaps.width, bitmaps.height, GxEPD_YELLOW);
-  display.drawBitmap(imageX, imageY, bitmaps.redBitmap, bitmaps.width, bitmaps.height, GxEPD_RED);
-  display.drawBitmap(imageX, imageY, bitmaps.blueBitmap, bitmaps.width, bitmaps.height, GxEPD_BLUE);
-  display.drawBitmap(imageX, imageY, bitmaps.greenBitmap, bitmaps.width, bitmaps.height, GxEPD_GREEN);
+  display.drawBitmap(imageX, imageY, bitmaps.blackBitmap, bitmaps.width,
+                     bitmaps.height, GxEPD_BLACK);
+  display.drawBitmap(imageX, imageY, bitmaps.yellowBitmap, bitmaps.width,
+                     bitmaps.height, GxEPD_YELLOW);
+  display.drawBitmap(imageX, imageY, bitmaps.redBitmap, bitmaps.width,
+                     bitmaps.height, GxEPD_RED);
+  display.drawBitmap(imageX, imageY, bitmaps.blueBitmap, bitmaps.width,
+                     bitmaps.height, GxEPD_BLUE);
+  display.drawBitmap(imageX, imageY, bitmaps.greenBitmap, bitmaps.width,
+                     bitmaps.height, GxEPD_GREEN);
 }
 
 void ImageScreen::render() {
@@ -268,13 +300,14 @@ void ImageScreen::render() {
 
   renderBitmaps(*bitmaps);
   displayBatteryStatus();
+  displayWifiInfo();
 
   display.display();
   display.hibernate();
 }
 
-void ImageScreen::displayError(const String& errorMessage) {
-  Serial.println("ImageScreen Error: " + errorMessage);
+void ImageScreen::displayError(const String &errorMessage) {
+  printf("ImageScreen Error: %s \r\n", errorMessage.c_str());
 
   gfx.setFontMode(1);
   gfx.setForegroundColor(GxEPD_BLACK);
@@ -292,6 +325,10 @@ void ImageScreen::displayError(const String& errorMessage) {
   gfx.print(errorMessage);
 
   displayBatteryStatus();
+  displayWifiInfo();
+
+  display.display();
+  display.hibernate();
 }
 
 void ImageScreen::displayBatteryStatus() {
@@ -322,6 +359,41 @@ void ImageScreen::displayBatteryStatus() {
 
   gfx.setCursor(batteryX, batteryY);
   gfx.print(batteryStatus);
+}
+
+void ImageScreen::displayWifiInfo() {
+  if (WiFi.status() != WL_CONNECTED)
+    return;
+
+  String wifiInfo =
+      String(WiFi.SSID()) + " (" + WiFi.localIP().toString() + ")";
+
+  gfx.setFontMode(0);
+  gfx.setBackgroundColor(GxEPD_WHITE);
+  gfx.setForegroundColor(GxEPD_BLACK);
+  gfx.setFont(u8g2_font_helvB08_tr);
+
+  int textWidth = gfx.getUTF8Width(wifiInfo.c_str());
+  int textHeight = gfx.getFontAscent() - gfx.getFontDescent();
+  int fontAscent = gfx.getFontAscent();
+
+  int paddingX = 6;
+  int paddingY = 4;
+  int rectWidth = textWidth + (2 * paddingX);
+  int rectHeight = textHeight + (2 * paddingY);
+
+  // Position at the bottom left
+  int rectX = 4;
+  int rectY = display.height() - rectHeight - 4;
+
+  int infoX = rectX + paddingX;
+  int infoY = rectY + rectHeight / 2 + fontAscent / 2;
+
+  // Draw white rounded rectangle background
+  display.fillRoundRect(rectX, rectY, rectWidth, rectHeight, 4, GxEPD_WHITE);
+
+  gfx.setCursor(infoX, infoY);
+  gfx.print(wifiInfo);
 }
 
 int ImageScreen::nextRefreshInSeconds() { return 1800; }

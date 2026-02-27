@@ -7,23 +7,26 @@
 // ============================================================
 
 // Frame buffer size: each byte holds 2 pixels (4-bit nibbles)
-static const size_t FRAME_BUFFER_SIZE = (EPD_NATIVE_WIDTH * EPD_NATIVE_HEIGHT) / 2;  // 960000 bytes
+static const size_t FRAME_BUFFER_SIZE =
+    (EPD_NATIVE_WIDTH * EPD_NATIVE_HEIGHT) / 2; // 960000 bytes
 
 DisplayAdapter::DisplayAdapter()
-    : Adafruit_GFX(EPD_NATIVE_WIDTH, EPD_NATIVE_HEIGHT), _frameBuffer(nullptr), _initialized(false) {}
+    : Adafruit_GFX(EPD_NATIVE_WIDTH, EPD_NATIVE_HEIGHT), _frameBuffer(nullptr),
+      _initialized(false) {}
 
 void DisplayAdapter::init(uint32_t serial_diag_bitrate) {
   if (!_initialized) {
     // Allocate framebuffer in PSRAM
-    _frameBuffer = (uint8_t*)ps_malloc(FRAME_BUFFER_SIZE);
+    _frameBuffer = (uint8_t *)ps_malloc(FRAME_BUFFER_SIZE);
     if (!_frameBuffer) {
-      Serial.println("FATAL: Failed to allocate PSRAM framebuffer for 13.3\" display!");
+      Serial.println(
+          "FATAL: Failed to allocate PSRAM framebuffer for 13.3\" display!");
       return;
     }
     // Fill with white
     memset(_frameBuffer, (WHITE << 4) | WHITE, FRAME_BUFFER_SIZE);
 
-    Serial.println("Initializing Good-Display ESP32-133C02 QSPI hardware...");
+    printf("Initializing Good-Display ESP32-133C02 QSPI hardware... \r\n");
 
     // Initialize GPIO and SPI bus using the manufacturer's driver
     initialGpio();
@@ -36,7 +39,7 @@ void DisplayAdapter::init(uint32_t serial_diag_bitrate) {
     initEPD();
 
     _initialized = true;
-    Serial.println("Display initialized successfully.");
+    printf("Display initialized successfully. \r\n");
   } else {
     // Re-init the EPD registers (as the manufacturer does before each refresh)
     initEPD();
@@ -50,39 +53,43 @@ void DisplayAdapter::setFullWindow() {
 }
 
 void DisplayAdapter::fillScreen(uint16_t color) {
-  if (!_frameBuffer) return;
+  if (!_frameBuffer)
+    return;
   uint8_t packedColor = ((color & 0xFF) << 4) | (color & 0xFF);
   memset(_frameBuffer, packedColor, FRAME_BUFFER_SIZE);
 }
 
 void DisplayAdapter::drawPixel(int16_t x, int16_t y, uint16_t color) {
-  if (!_frameBuffer) return;
+  if (!_frameBuffer)
+    return;
 
   // Apply rotation (Adafruit_GFX gives us logical coordinates)
   int16_t t;
   switch (getRotation()) {
-    case 0:
-      break;
-    case 1:
-      t = x;
-      x = EPD_NATIVE_WIDTH - 1 - y;
-      y = t;
-      break;
-    case 2:
-      x = EPD_NATIVE_WIDTH - 1 - x;
-      y = EPD_NATIVE_HEIGHT - 1 - y;
-      break;
-    case 3:
-      t = x;
-      x = y;
-      y = EPD_NATIVE_HEIGHT - 1 - t;
-      break;
+  case 0:
+    break;
+  case 1:
+    t = x;
+    x = EPD_NATIVE_WIDTH - 1 - y;
+    y = t;
+    break;
+  case 2:
+    x = EPD_NATIVE_WIDTH - 1 - x;
+    y = EPD_NATIVE_HEIGHT - 1 - y;
+    break;
+  case 3:
+    t = x;
+    x = y;
+    y = EPD_NATIVE_HEIGHT - 1 - t;
+    break;
   }
 
   // Bounds check on physical coordinates
-  if (x < 0 || x >= EPD_NATIVE_WIDTH || y < 0 || y >= EPD_NATIVE_HEIGHT) return;
+  if (x < 0 || x >= EPD_NATIVE_WIDTH || y < 0 || y >= EPD_NATIVE_HEIGHT)
+    return;
 
-  // Pack into the framebuffer (2 pixels per byte, high nibble = even x, low nibble = odd x)
+  // Pack into the framebuffer (2 pixels per byte, high nibble = even x, low
+  // nibble = odd x)
   size_t index = ((size_t)y * EPD_NATIVE_WIDTH + x) / 2;
   if (x % 2 == 0) {
     _frameBuffer[index] = (_frameBuffer[index] & 0x0F) | ((color & 0x0F) << 4);
@@ -92,7 +99,8 @@ void DisplayAdapter::drawPixel(int16_t x, int16_t y, uint16_t color) {
 }
 
 void DisplayAdapter::sendFrameBufferToDisplay() {
-  if (!_frameBuffer) return;
+  if (!_frameBuffer)
+    return;
 
   // The 13.3" display has TWO driver ICs, each handling half the width.
   // From the manufacturer's pic_display_test():
@@ -102,9 +110,9 @@ void DisplayAdapter::sendFrameBufferToDisplay() {
   // CS0 (left half):  for each row, send bytes [0..Width1-1]
   // CS1 (right half): for each row, send bytes [Width1..Width-1]
 
-  const unsigned int Width = EPD_NATIVE_WIDTH / 2;  // 600 pixels per section
-  const unsigned int Width1 = Width / 2;            // 300 bytes per section per row
-  const unsigned int Height = EPD_NATIVE_HEIGHT;    // 1600 rows
+  const unsigned int Width = EPD_NATIVE_WIDTH / 2; // 600 pixels per section
+  const unsigned int Width1 = Width / 2; // 300 bytes per section per row
+  const unsigned int Height = EPD_NATIVE_HEIGHT; // 1600 rows
 
   Serial.println("Sending framebuffer to display (dual-IC split)...");
 
@@ -131,17 +139,18 @@ void DisplayAdapter::sendFrameBufferToDisplay() {
 }
 
 void DisplayAdapter::display(bool partial_update_mode) {
+  printf("DisplayAdapter::display() started... \r\n");
   sendFrameBufferToDisplay();
 
-  Serial.println("Triggering e-paper refresh (this takes ~20 seconds)...");
+  printf("Triggering e-paper refresh (this takes ~20 seconds)... \r\n");
   epdDisplay();
-  Serial.println("Display refresh complete.");
+  printf("Display refresh complete. \r\n");
 }
 
 void DisplayAdapter::hibernate() {
   // Power off the display to save energy
   setPinCsAll(GPIO_LOW);
-  writeEpd(POF, (unsigned char*)POF_V, sizeof(POF_V));
+  writeEpd(POF, (unsigned char *)POF_V, sizeof(POF_V));
   checkBusyHigh();
   setPinCsAll(GPIO_HIGH);
   Serial.println("Display entered hibernate mode.");
