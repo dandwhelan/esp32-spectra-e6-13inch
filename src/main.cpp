@@ -77,15 +77,20 @@ void setup() {
 
   initializeDefaultConfig();
 
-  // Check wake-up cause to enter Web Server mode
+  // Initial check based on sleep wake cause
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
   bool webServerMode = (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0);
 
   // Fallback check for power-on or reset buttons (if held)
   pinMode(13, INPUT_PULLUP);
   delay(50);
-  if (digitalRead(13) == LOW) {
-    webServerMode = true;
+
+  // Only check the hardware button if it's NOT a software restart.
+  // Software restarts (ESP_RST_SW) occur after an image upload or clear.
+  if (reason != ESP_RST_SW) {
+    if (digitalRead(13) == LOW) {
+      webServerMode = true;
+    }
   }
 
   if (webServerMode) {

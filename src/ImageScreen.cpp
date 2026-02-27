@@ -450,7 +450,7 @@ void ImageScreen::renderBitmaps(const ColorImageBitmaps &bitmaps) {
 }
 
 std::unique_ptr<ColorImageBitmaps> ImageScreen::loadFromSPIFFS() {
-  const char *extensions[] = {".bmp", ".jpg", ".jpeg", ".png"};
+  const char *extensions[] = {".bmp", ".jpg", ".jpeg", ".png", ""};
   String baseName = "/local_image";
   String filename = "";
 

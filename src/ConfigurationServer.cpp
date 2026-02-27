@@ -134,7 +134,9 @@ void ConfigurationServer::setupWebServer() {
       [](AsyncWebServerRequest *request) {
         request->send(
             200, "text/plain",
-            "Upload successful! Device will now use this image. Please reset.");
+            "Upload successful! Device will now use this image. Rebooting...");
+        delay(500);
+        ESP.restart();
       },
       [this](AsyncWebServerRequest *request, const String &filename,
              size_t index, uint8_t *data, size_t len, bool final) {
@@ -155,11 +157,14 @@ void ConfigurationServer::setupWebServer() {
         }
       }
       if (deleted) {
-        request->send(200, "text/plain", "Local image cleared. Redirecting...");
+        request->send(200, "text/plain", "Local image cleared. Rebooting...");
       } else {
-        request->send(200, "text/plain", "No local image to clear.");
+        request->send(200, "text/plain",
+                      "No local image to clear. Rebooting...");
       }
       SPIFFS.end();
+      delay(500);
+      ESP.restart();
     } else {
       request->send(500, "text/plain", "SPIFFS error");
     }
