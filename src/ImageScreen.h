@@ -57,8 +57,9 @@ private:
   String ditheringServiceUrl;
 
   std::unique_ptr<DownloadResult> download();
-  std::unique_ptr<ColorImageBitmaps> processImageData(uint8_t *data,
-                                                      size_t dataSize);
+  std::unique_ptr<ColorImageBitmaps>
+  processImageData(uint8_t *data, size_t dataSize,
+                   uint8_t **freeAfterDecode = nullptr);
   void renderBitmaps(const ColorImageBitmaps &bitmaps);
   void displayBatteryStatus();
   void displayWifiInfo();
@@ -70,7 +71,9 @@ private:
   static bool jpgOutput(int16_t x, int16_t y, uint16_t w, uint16_t h,
                         uint16_t *bitmap);
 
-  std::unique_ptr<ColorImageBitmaps> decodeJPG(uint8_t *data, size_t dataSize);
+  std::unique_ptr<ColorImageBitmaps>
+  decodeJPG(uint8_t *data, size_t dataSize,
+            uint8_t **freeAfterDecode = nullptr);
   std::unique_ptr<ColorImageBitmaps> decodePNG(File &file);
   std::unique_ptr<ColorImageBitmaps> decodePNG(uint8_t *data, size_t dataSize);
   std::unique_ptr<ColorImageBitmaps> decodeBMP(uint8_t *data, size_t dataSize);

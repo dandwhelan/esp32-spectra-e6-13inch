@@ -271,8 +271,9 @@ bool ImageScreen::jpgOutput(int16_t x, int16_t y, uint16_t w, uint16_t h,
   return true;
 }
 
-std::unique_ptr<ColorImageBitmaps> ImageScreen::decodeJPG(uint8_t *data,
-                                                          size_t dataSize) {
+std::unique_ptr<ColorImageBitmaps>
+ImageScreen::decodeJPG(uint8_t *data, size_t dataSize,
+                       uint8_t **freeAfterDecode) {
   Serial.println("Decoding JPEG...");
   jpgRgb565Buffer = (uint16_t *)ps_malloc(1200 * 1600 * 2);
   if (!jpgRgb565Buffer) {
@@ -292,6 +293,13 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::decodeJPG(uint8_t *data,
     Serial.println("JPEG decode failed");
     free(jpgRgb565Buffer);
     return nullptr;
+  }
+
+  // Free source data NOW to reclaim PSRAM before dithering
+  if (freeAfterDecode && *freeAfterDecode) {
+    Serial.printf("Freeing source buffer to reclaim PSRAM\n");
+    free(*freeAfterDecode);
+    *freeAfterDecode = nullptr;
   }
 
   // Scale up small images to fill the display
@@ -562,13 +570,14 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::decodeBMP(uint8_t *data,
 }
 
 std::unique_ptr<ColorImageBitmaps>
-ImageScreen::processImageData(uint8_t *data, size_t dataSize) {
+ImageScreen::processImageData(uint8_t *data, size_t dataSize,
+                              uint8_t **freeAfterDecode) {
   if (dataSize < 4)
     return nullptr;
 
   // Manual format detection
   if (data[0] == 0xFF && data[1] == 0xD8) {
-    return decodeJPG(data, dataSize);
+    return decodeJPG(data, dataSize, freeAfterDecode);
   } else if (data[0] == 0x89 && data[1] == 'P' && data[2] == 'N' &&
              data[3] == 'G') {
     return decodePNG(data, dataSize);
@@ -666,9 +675,12 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::loadFromLittleFS() {
   }
 
   printf("Passing local LittleFS image to processImageData...\r\n");
-  auto bitmaps = processImageData(fileBuffer, bytesRead);
+  auto bitmaps = processImageData(fileBuffer, bytesRead, &fileBuffer);
 
-  free(fileBuffer);
+  // fileBuffer may have been freed by decodeJPG already
+  if (fileBuffer) {
+    free(fileBuffer);
+  }
 
   return bitmaps;
 }
