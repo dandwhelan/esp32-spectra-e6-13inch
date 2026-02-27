@@ -1,26 +1,30 @@
 #include "HttpDownloader.h"
-
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 
 HttpDownloader::HttpDownloader() {}
 
 HttpDownloader::~HttpDownloader() {}
 
-std::unique_ptr<DownloadResult> HttpDownloader::download(const String& url, const String& cachedETag) {
+std::unique_ptr<DownloadResult>
+HttpDownloader::download(const String &url, const String &cachedETag) {
+  WiFiClientSecure client;
+  client.setInsecure(); // Allow HTTPS without certificate validation
+
   HTTPClient http;
   auto result = std::unique_ptr<DownloadResult>(new DownloadResult());
 
   Serial.println("Requesting data from: " + url);
 
-  http.begin(url);
+  http.begin(client, url);
   http.setTimeout(10000);
 
   if (cachedETag.length() > 0) {
     http.addHeader("If-None-Match", cachedETag);
   }
 
-  const char* headerKeys[] = {"Content-Type", "Transfer-Encoding", "ETag"};
-  size_t headerKeysSize = sizeof(headerKeys) / sizeof(char*);
+  const char *headerKeys[] = {"Content-Type", "Transfer-Encoding", "ETag"};
+  size_t headerKeysSize = sizeof(headerKeys) / sizeof(char *);
   http.collectHeaders(headerKeys, headerKeysSize);
 
   int httpCode = http.GET();
@@ -46,7 +50,7 @@ std::unique_ptr<DownloadResult> HttpDownloader::download(const String& url, cons
 
   String contentType = http.header("Content-Type");
   contentType.toLowerCase();
-  if (!contentType.isEmpty() && contentType != "image/bmp") {
+  if (!contentType.isEmpty() && contentType.indexOf("image") == -1) {
     Serial.println("Unexpected content type: " + contentType);
     http.end();
     result->httpCode = -1;
@@ -56,7 +60,7 @@ std::unique_ptr<DownloadResult> HttpDownloader::download(const String& url, cons
   String transferEncoding = http.header("Transfer-Encoding");
   bool isChunked = transferEncoding.indexOf("chunked") != -1;
 
-  WiFiClient* stream = http.getStreamPtr();
+  WiFiClient *stream = http.getStreamPtr();
 
   if (isChunked) {
     result = downloadChunked(stream);
@@ -75,11 +79,12 @@ std::unique_ptr<DownloadResult> HttpDownloader::download(const String& url, cons
   return result;
 }
 
-std::unique_ptr<DownloadResult> HttpDownloader::downloadChunked(WiFiClient* stream) {
+std::unique_ptr<DownloadResult>
+HttpDownloader::downloadChunked(WiFiClient *stream) {
   auto result = std::unique_ptr<DownloadResult>(new DownloadResult());
 
   size_t bufferCapacity = 400 * 1024;
-  result->data = (uint8_t*)ps_malloc(bufferCapacity);
+  result->data = (uint8_t *)ps_malloc(bufferCapacity);
   if (!result->data) {
     Serial.println("Failed to allocate PSRAM buffer");
     result->httpCode = -1;
@@ -90,7 +95,8 @@ std::unique_ptr<DownloadResult> HttpDownloader::downloadChunked(WiFiClient* stre
 
   while (stream->connected()) {
     char chunkSizeBuffer[16];
-    size_t lineLength = stream->readBytesUntil('\n', (uint8_t*)chunkSizeBuffer, sizeof(chunkSizeBuffer) - 1);
+    size_t lineLength = stream->readBytesUntil('\n', (uint8_t *)chunkSizeBuffer,
+                                               sizeof(chunkSizeBuffer) - 1);
     chunkSizeBuffer[lineLength] = '\0';
 
     if (lineLength > 0 && chunkSizeBuffer[lineLength - 1] == '\r') {
@@ -109,9 +115,10 @@ std::unique_ptr<DownloadResult> HttpDownloader::downloadChunked(WiFiClient* stre
     }
 
     if (result->size + chunkSize > bufferCapacity) {
-      bufferCapacity = max(bufferCapacity * 2, (size_t)(result->size + chunkSize + 1024));
+      bufferCapacity =
+          max(bufferCapacity * 2, (size_t)(result->size + chunkSize + 1024));
 
-      result->data = (uint8_t*)ps_realloc(result->data, bufferCapacity);
+      result->data = (uint8_t *)ps_realloc(result->data, bufferCapacity);
       if (!result->data) {
         Serial.println("Failed to expand PSRAM buffer");
         result->httpCode = -1;
@@ -119,9 +126,11 @@ std::unique_ptr<DownloadResult> HttpDownloader::downloadChunked(WiFiClient* stre
       }
     }
 
-    size_t bytesRead = stream->readBytes(result->data + result->size, chunkSize);
+    size_t bytesRead =
+        stream->readBytes(result->data + result->size, chunkSize);
     if (bytesRead != chunkSize) {
-      Serial.printf("Warning: Expected %ld bytes, got %d bytes\n", chunkSize, bytesRead);
+      Serial.printf("Warning: Expected %ld bytes, got %d bytes\n", chunkSize,
+                    bytesRead);
     }
     result->size += bytesRead;
 
@@ -137,11 +146,12 @@ std::unique_ptr<DownloadResult> HttpDownloader::downloadChunked(WiFiClient* stre
   return result;
 }
 
-std::unique_ptr<DownloadResult> HttpDownloader::downloadRegular(WiFiClient* stream) {
+std::unique_ptr<DownloadResult>
+HttpDownloader::downloadRegular(WiFiClient *stream) {
   auto result = std::unique_ptr<DownloadResult>(new DownloadResult());
 
   size_t bufferCapacity = 400 * 1024;
-  result->data = (uint8_t*)ps_malloc(bufferCapacity);
+  result->data = (uint8_t *)ps_malloc(bufferCapacity);
   if (!result->data) {
     Serial.println("Failed to allocate PSRAM buffer");
     result->httpCode = -1;
@@ -154,21 +164,23 @@ std::unique_ptr<DownloadResult> HttpDownloader::downloadRegular(WiFiClient* stre
   while (stream->available() > 0) {
     if (result->size + chunkSize > bufferCapacity) {
       bufferCapacity = bufferCapacity * 2;
-      result->data = (uint8_t*)ps_realloc(result->data, bufferCapacity);
+      result->data = (uint8_t *)ps_realloc(result->data, bufferCapacity);
       if (!result->data) {
         result->httpCode = -1;
         return result;
       }
     }
 
-    size_t bytesRead = stream->readBytes(result->data + result->size, chunkSize);
-    if (bytesRead == 0) break;
+    size_t bytesRead =
+        stream->readBytes(result->data + result->size, chunkSize);
+    if (bytesRead == 0)
+      break;
     result->size += bytesRead;
   }
   return result;
 }
 
-String HttpDownloader::urlEncode(const String& str) {
+String HttpDownloader::urlEncode(const String &str) {
   String encoded = "";
   char c;
   for (int i = 0; i < str.length(); i++) {
@@ -177,7 +189,8 @@ String HttpDownloader::urlEncode(const String& str) {
       encoded += c;
     } else {
       encoded += '%';
-      if (c < 16) encoded += '0';
+      if (c < 16)
+        encoded += '0';
       encoded += String(c, HEX);
     }
   }

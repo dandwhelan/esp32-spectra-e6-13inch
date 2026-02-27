@@ -1,5 +1,5 @@
 .pio/build/esp32s3/src/GDEP133C02.c.o: src/GDEP133C02.c src/GDEP133C02.h \
- src/pindefine.h src/comm.h \
+ src/comm.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_system/include/esp_system.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_common/include/esp_err.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_common/include/esp_compiler.h \
@@ -96,4 +96,4 @@
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/freertos/task.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/freertos/list.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/esp_additions/freertos/task_snapshot.h \
- src/status.h
+ src/pindefine.h src/status.h

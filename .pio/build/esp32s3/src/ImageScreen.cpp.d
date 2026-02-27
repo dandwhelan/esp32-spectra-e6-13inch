@@ -1,7 +1,5 @@
 .pio/build/esp32s3/src/ImageScreen.cpp.o: src/ImageScreen.cpp \
  src/ImageScreen.h \
- .pio/libdeps/esp32s3/U8g2_for_Adafruit_GFX/src/U8g2_for_Adafruit_GFX.h \
- .pio/libdeps/esp32s3/Adafruit\ GFX\ Library/Adafruit_GFX.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/freertos/FreeRTOS.h \
@@ -180,14 +178,31 @@
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
+ .pio/libdeps/esp32s3/PNGdec/src/PNGdec.h \
+ .pio/libdeps/esp32s3/PNGdec/src/zutil.h \
+ .pio/libdeps/esp32s3/PNGdec/src/zlib.h \
+ .pio/libdeps/esp32s3/PNGdec/src/zconf.h \
+ .pio/libdeps/esp32s3/PNGdec/src/inftrees.h \
+ .pio/libdeps/esp32s3/PNGdec/src/inflate.h \
+ .pio/libdeps/esp32s3/TJpg_Decoder/src/TJpg_Decoder.h \
+ .pio/libdeps/esp32s3/TJpg_Decoder/src/User_Config.h \
+ .pio/libdeps/esp32s3/TJpg_Decoder/src/tjpgd.h \
+ .pio/libdeps/esp32s3/TJpg_Decoder/src/tjpgdcnf.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/FS/src/FS.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src/LittleFS.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src/SPIFFS.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SD/src/SD.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SD/src/sd_defines.h \
+ .pio/libdeps/esp32s3/U8g2_for_Adafruit_GFX/src/U8g2_for_Adafruit_GFX.h \
+ .pio/libdeps/esp32s3/Adafruit\ GFX\ Library/Adafruit_GFX.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
  .pio/libdeps/esp32s3/Adafruit\ GFX\ Library/gfxfont.h \
  .pio/libdeps/esp32s3/Adafruit\ BusIO/Adafruit_I2CDevice.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
  .pio/libdeps/esp32s3/Adafruit\ BusIO/Adafruit_SPIDevice.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
  .pio/libdeps/esp32s3/U8g2_for_Adafruit_GFX/src/u8g2_fonts.h \
  src/ApplicationConfig.h src/config_default.h src/DisplayAdapter.h \
  src/GDEP133C02.h src/comm.h \
@@ -270,7 +285,4 @@
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/mbedtls/port/include/aes/esp_aes.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/hal/include/hal/aes_types.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/mbedtls/mbedtls/include/mbedtls/error.h \
- src/Screen.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src/SPIFFS.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/FS/src/FS.h \
- src/battery.h include/boards.h
+ src/Screen.h src/battery.h

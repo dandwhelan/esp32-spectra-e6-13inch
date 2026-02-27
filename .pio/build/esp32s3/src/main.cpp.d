@@ -177,31 +177,11 @@
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFi.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/IPv6Address.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiType.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiSTA.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiGeneric.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_wifi/include/esp_smartconfig.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/wifi_provisioning/include/wifi_provisioning/manager.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/protocomm/include/common/protocomm.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/protocomm/include/security/protocomm_security.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/wifi_provisioning/include/wifi_provisioning/wifi_config.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiAP.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiScan.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiClient.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Client.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiServer.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Server.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiUdp.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Udp.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/cbuf.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_system/include/esp_task_wdt.h \
  src/ApplicationConfig.h src/config_default.h \
  src/ApplicationConfigStorage.h src/ConfigurationScreen.h \
  .pio/libdeps/esp32s3/U8g2_for_Adafruit_GFX/src/U8g2_for_Adafruit_GFX.h \
  .pio/libdeps/esp32s3/Adafruit\ GFX\ Library/Adafruit_GFX.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
  .pio/libdeps/esp32s3/Adafruit\ GFX\ Library/gfxfont.h \
  .pio/libdeps/esp32s3/Adafruit\ BusIO/Adafruit_I2CDevice.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
@@ -233,9 +213,12 @@
  src/pindefine.h src/status.h src/Screen.h src/ConfigurationServer.h \
  .pio/libdeps/esp32s3/AsyncTCP@src-3d2743e0c28a86159a81736b0029ad30/src/AsyncTCP.h \
  .pio/libdeps/esp32s3/AsyncTCP@src-3d2743e0c28a86159a81736b0029ad30/src/AsyncTCPVersion.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/IPv6Address.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/lwip/lwip/src/include/lwip/pbuf.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/DNSServer/src/DNSServer.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiUdp.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Udp.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/cbuf.h \
  .pio/libdeps/esp32s3/ESPAsyncWebServer/src/ESPAsyncWebServer.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/FS/src/FS.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/lwip/lwip/src/include/lwip/tcpbase.h \
@@ -248,10 +231,39 @@
  .pio/libdeps/esp32s3/ESPAsyncWebServer/src/WebHandlerImpl.h \
  .pio/libdeps/esp32s3/ESPAsyncWebServer/src/WebResponseImpl.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src/SPIFFS.h \
- src/ImageScreen.h src/HttpDownloader.h \
+ src/ImageScreen.h .pio/libdeps/esp32s3/PNGdec/src/PNGdec.h \
+ .pio/libdeps/esp32s3/PNGdec/src/zutil.h \
+ .pio/libdeps/esp32s3/PNGdec/src/zlib.h \
+ .pio/libdeps/esp32s3/PNGdec/src/zconf.h \
+ .pio/libdeps/esp32s3/PNGdec/src/inftrees.h \
+ .pio/libdeps/esp32s3/PNGdec/src/inflate.h \
+ .pio/libdeps/esp32s3/TJpg_Decoder/src/TJpg_Decoder.h \
+ .pio/libdeps/esp32s3/TJpg_Decoder/src/User_Config.h \
+ .pio/libdeps/esp32s3/TJpg_Decoder/src/tjpgd.h \
+ .pio/libdeps/esp32s3/TJpg_Decoder/src/tjpgdcnf.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src/LittleFS.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SD/src/SD.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SD/src/sd_defines.h \
+ src/HttpDownloader.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src/HTTPClient.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiClient.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Client.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src/WiFiClientSecure.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFi.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiType.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiSTA.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiGeneric.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_wifi/include/esp_smartconfig.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/wifi_provisioning/include/wifi_provisioning/manager.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/protocomm/include/common/protocomm.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/protocomm/include/security/protocomm_security.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/wifi_provisioning/include/wifi_provisioning/wifi_config.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiAP.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiScan.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiClient.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiServer.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/Server.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiUdp.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src/ssl_client.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/mbedtls/mbedtls/include/mbedtls/platform.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/mbedtls/port/include/mbedtls/esp_config.h \
@@ -290,4 +302,4 @@
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/mbedtls/port/include/aes/esp_aes.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/hal/include/hal/aes_types.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/mbedtls/mbedtls/include/mbedtls/error.h \
- src/WiFiConnection.h src/battery.h include/boards.h
+ src/WiFiConnection.h src/battery.h

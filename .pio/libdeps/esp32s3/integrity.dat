@@ -1,11 +1,13 @@
+bitbank2/PNGdec@^1.0.1
+HTTPClient
+bodmer/TJpg_Decoder@^1.1.0
+FS
+https://github.com/ESP32Async/AsyncTCP.git
 olikraus/U8g2@^2.36.5
-WiFi
-adafruit/Adafruit GFX Library@^1.11.5
 https://github.com/olikraus/U8g2_for_Adafruit_GFX.git
 https://github.com/ESP32Async/ESPAsyncWebServer.git
-https://github.com/ESP32Async/AsyncTCP.git
-SPIFFS
+WiFi
+adafruit/Adafruit GFX Library@^1.11.5
 DNSServer
-HTTPClient
-FS
 ricmoo/qrcode@^0.0.1
+SPIFFS

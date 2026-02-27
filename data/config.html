@@ -319,12 +319,35 @@
                     placeholder="Enter full image URL (e.g., https://example.com/image.jpg)"
                     value="{{CURRENT_IMAGE_URL}}" autocomplete="off" autocapitalize="none" autocorrect="off">
                 <small style="color: #6b7280; font-size: 12px; margin-top: 4px; display: block;">
-                    Must return a direct image file (JPEG, PNG, BMP, etc.) that can be downloaded and processed for
+                    Must return a direct image file (JPEG, PNG, BMP) that can be downloaded and processed for
                     e-ink display.
                 </small>
             </div>
 
             <button type="submit" class="btn" id="submitBtn">Save Configuration</button>
+        </form>
+
+        <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 30px 0;">
+
+        <h2 style="color: #2c3e50; font-size: 18px; margin-bottom: 20px; text-align: center;">Upload Local Image</h2>
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="imageFile">Select Image File (JPG, PNG, BMP)</label>
+                <input type="file" id="imageFile" name="imageFile" accept=".bmp,.jpg,.jpeg,.png" required
+                    style="width: 100%; padding: 12px; border: 2px dashed #9ca3af; border-radius: 12px; background: #f9fafb; cursor: pointer;">
+                <small style="color: #6b7280; font-size: 12px; margin-top: 8px; display: block;">
+                    This will bypass the image URL and be used directly. The device will automatically dither and
+                    convert it.
+                </small>
+            </div>
+            <button type="submit" class="btn" id="uploadBtn"
+                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Upload Image</button>
+        </form>
+
+        <form id="clearForm" action="/clear" method="post" style="margin-top: 10px;">
+            <button type="submit" class="btn" id="clearBtn"
+                style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); margin-top: 10px;">Clear Local
+                Image (Use URL instead)</button>
         </form>
     </div>
 
@@ -376,6 +399,39 @@
                 statusDiv.textContent = 'Error saving configuration. Please try again.';
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Save Configuration';
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', function () {
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading... Please wait.';
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = 'Uploading image to device...';
+            statusDiv.style.display = 'flex';
+        });
+
+        document.getElementById('clearForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const clearBtn = document.getElementById('clearBtn');
+            clearBtn.disabled = true;
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = 'Clearing local image...';
+            statusDiv.style.display = 'flex';
+
+            try {
+                const response = await fetch('/clear', { method: 'POST' });
+                if (response.ok) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = '✓ Local image cleared! Device will use the URL on next boot.';
+                } else {
+                    throw new Error('Failed to clear image');
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = 'Error clearing image.';
+                clearBtn.disabled = false;
             }
         });
 

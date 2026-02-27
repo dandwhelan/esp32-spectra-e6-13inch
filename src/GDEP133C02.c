@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 const unsigned char spiCsPin[2] = {SPI_CS0, SPI_CS1};
 const unsigned char PSR_V[2] = {0xDF, 0x69};
 const unsigned char PWR_V[6] = {0x0F, 0x00, 0x28, 0x2C, 0x28, 0x38};
@@ -32,7 +31,7 @@ const unsigned char BTST_N_V[2] = {0xE8, 0x28};
 const unsigned char BUCK_BOOST_VDDN_V[1] = {0x01};
 const unsigned char TFT_VCOM_POWER_V[1] = {0x02};
 
-char partialWindowUpdateStatus = DONE;
+char partialWindowUpdateStatus = EPD_DONE;
 
 //================== GPIO Setting ====================================
 void resetPin(unsigned int pinStatus) { setGpioLevel(EPD_RST, pinStatus); }
@@ -174,7 +173,7 @@ void initEPD(void) {
 }
 
 unsigned char checkDriverICStatus(void) {
-  unsigned char csx, status = DONE;
+  unsigned char csx, status = EPD_DONE;
   unsigned char dataBuf[3];
 
   for (csx = 0; csx < 2; csx++) {
@@ -194,7 +193,7 @@ unsigned char checkDriverICStatus(void) {
 #if SHOW_LOG
       printf("Driver IC [%d] did not reply. \r\n", csx);
 #endif
-      status = ERROR;
+      status = EPD_ERROR;
     }
   }
 
@@ -448,7 +447,7 @@ char partialWindowUpdateWithImageData(unsigned char csx,
                                       unsigned int xStart, unsigned int yStart,
                                       unsigned int xPixel, unsigned int yLine,
                                       unsigned char epdDisplayEnable) {
-  unsigned char status = DONE;
+  unsigned char status = EPD_DONE;
   unsigned int HRST, HRED, VRST, VRED;
   unsigned char partialWindowData[9];
 
@@ -538,15 +537,15 @@ char partialWindowUpdateWithImageData(unsigned char csx,
     setPinCs(csx, GPIO_HIGH);
   }
 
-  if (status != DONE) {
-    partialWindowUpdateStatus = ERROR;
+  if (status != EPD_DONE) {
+    partialWindowUpdateStatus = EPD_ERROR;
 #if SHOW_LOG
-    printf("partialWindowUpdateStatus = ERROR \r\n");
+    printf("partialWindowUpdateStatus = EPD_ERROR \r\n");
 #endif
   }
 
   if (epdDisplayEnable) {
-    if (partialWindowUpdateStatus == DONE)
+    if (partialWindowUpdateStatus == EPD_DONE)
       epdDisplay();
 
     delayms(300);
@@ -554,7 +553,7 @@ char partialWindowUpdateWithImageData(unsigned char csx,
     //========================= Turn off PTLW =========================
     memset(partialWindowData, 0, sizeof(partialWindowData));
     partialWindowData[8] = PTLW_DISABLE;
-    partialWindowUpdateStatus = DONE;
+    partialWindowUpdateStatus = EPD_DONE;
 
     setPinCsAll(GPIO_LOW);
     writeEpd(PTLW, partialWindowData, sizeof(partialWindowData));
@@ -570,7 +569,7 @@ char partialWindowUpdateWithoutImageData(unsigned char csx, unsigned int xStart,
                                          unsigned int xPixel,
                                          unsigned int yLine,
                                          unsigned char epdDisplayEnable) {
-  unsigned char status = DONE;
+  unsigned char status = EPD_DONE;
   unsigned int HRST, HRED, VRST, VRED;
   unsigned char partialWindowData[9];
 
@@ -656,15 +655,15 @@ char partialWindowUpdateWithoutImageData(unsigned char csx, unsigned int xStart,
     setPinCs(csx, GPIO_HIGH);
   }
 
-  if (status != DONE) {
-    partialWindowUpdateStatus = ERROR;
+  if (status != EPD_DONE) {
+    partialWindowUpdateStatus = EPD_ERROR;
 #if SHOW_LOG
-    printf("partialWindowUpdateStatus = ERROR \r\n");
+    printf("partialWindowUpdateStatus = EPD_ERROR \r\n");
 #endif
   }
 
   if (epdDisplayEnable) {
-    if (partialWindowUpdateStatus == DONE)
+    if (partialWindowUpdateStatus == EPD_DONE)
       epdDisplay();
 
     delayms(300);
@@ -672,7 +671,7 @@ char partialWindowUpdateWithoutImageData(unsigned char csx, unsigned int xStart,
     //========================= Turn off PTLW =========================
     memset(partialWindowData, 0, sizeof(partialWindowData));
     partialWindowData[8] = PTLW_DISABLE;
-    partialWindowUpdateStatus = DONE;
+    partialWindowUpdateStatus = EPD_DONE;
 
     setPinCsAll(GPIO_LOW);
     writeEpd(PTLW, partialWindowData, sizeof(partialWindowData));

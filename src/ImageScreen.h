@@ -1,7 +1,13 @@
 #ifndef IMAGE_SCREEN_H
 #define IMAGE_SCREEN_H
 
+#include <Arduino.h>
+#include <PNGdec.h>
+#include <TJpg_Decoder.h>
 #include <U8g2_for_Adafruit_GFX.h>
+#include <esp_attr.h>
+#include <memory>
+#include <stdint.h>
 
 #include "ApplicationConfig.h"
 #include "DisplayAdapter.h"
@@ -53,11 +59,19 @@ private:
   std::unique_ptr<ColorImageBitmaps> processImageData(uint8_t *data,
                                                       size_t dataSize);
   void renderBitmaps(const ColorImageBitmaps &bitmaps);
-  void displayError(const String &errorMessage);
   void displayBatteryStatus();
   void displayWifiInfo();
   void storeImageETag(const String &etag);
   String getStoredImageETag();
+  std::unique_ptr<ColorImageBitmaps> loadFromSPIFFS();
+  std::unique_ptr<ColorImageBitmaps>
+  ditherImage(uint8_t *rgbBuffer, uint32_t width, uint32_t height);
+  static bool jpgOutput(int16_t x, int16_t y, uint16_t w, uint16_t h,
+                        uint16_t *bitmap);
+
+  std::unique_ptr<ColorImageBitmaps> decodeJPG(uint8_t *data, size_t dataSize);
+  std::unique_ptr<ColorImageBitmaps> decodePNG(uint8_t *data, size_t dataSize);
+  std::unique_ptr<ColorImageBitmaps> decodeBMP(uint8_t *data, size_t dataSize);
 
 public:
   ImageScreen(DisplayType &display, ApplicationConfig &config);
