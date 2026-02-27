@@ -13,6 +13,7 @@
 #include "DisplayAdapter.h"
 #include "HttpDownloader.h"
 #include "Screen.h"
+#include <LittleFS.h>
 
 RTC_DATA_ATTR static char storedImageETag[128] = "";
 
@@ -70,6 +71,7 @@ private:
                         uint16_t *bitmap);
 
   std::unique_ptr<ColorImageBitmaps> decodeJPG(uint8_t *data, size_t dataSize);
+  std::unique_ptr<ColorImageBitmaps> decodePNG(File &file);
   std::unique_ptr<ColorImageBitmaps> decodePNG(uint8_t *data, size_t dataSize);
   std::unique_ptr<ColorImageBitmaps> decodeBMP(uint8_t *data, size_t dataSize);
 

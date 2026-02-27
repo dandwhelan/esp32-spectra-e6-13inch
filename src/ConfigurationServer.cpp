@@ -134,9 +134,7 @@ void ConfigurationServer::setupWebServer() {
       [](AsyncWebServerRequest *request) {
         request->send(
             200, "text/plain",
-            "Upload successful! Device will now use this image. Rebooting...");
-        delay(500);
-        ESP.restart();
+            "Upload successful! Image will be displayed on next boot.");
       },
       [this](AsyncWebServerRequest *request, const String &filename,
              size_t index, uint8_t *data, size_t len, bool final) {

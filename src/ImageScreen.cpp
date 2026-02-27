@@ -48,6 +48,72 @@ static const RGBColor Spectra6Palette[] = {
     {0, 204, 0}      // 5: Green (00cc00)
 };
 
+// Nearest-neighbor upscale: scales srcW x srcH image to fill 1200x1600,
+// maintaining aspect ratio. The buffer must be 1200x1600 in size.
+static void scaleToFit(uint16_t *buffer, uint32_t srcW, uint32_t srcH) {
+  const uint32_t dstW = 1200;
+  const uint32_t dstH = 1600;
+
+  if (srcW >= dstW && srcH >= dstH)
+    return; // Already big enough, nothing to do
+
+  // Copy source pixels into a temporary buffer
+  size_t srcSize = srcW * srcH * sizeof(uint16_t);
+  uint16_t *srcCopy = (uint16_t *)ps_malloc(srcSize);
+  if (!srcCopy) {
+    Serial.println("Failed to allocate temp buffer for upscaling");
+    return;
+  }
+  for (uint32_t y = 0; y < srcH; y++) {
+    memcpy(&srcCopy[y * srcW], &buffer[y * dstW], srcW * sizeof(uint16_t));
+  }
+
+  // Calculate scale to fill entire display (cover mode)
+  // Use integer math: scale = dst / src
+  // We want the image to fill the display, so use the larger scale factor
+  // scaleX = dstW / srcW, scaleY = dstH / srcH
+  // Pick the smaller scale to fit (contain mode), or larger to fill (cover
+  // mode) Using contain mode so the entire image is visible:
+  float scaleX = (float)dstW / (float)srcW;
+  float scaleY = (float)dstH / (float)srcH;
+  float scale = (scaleX < scaleY) ? scaleX : scaleY;
+
+  uint32_t scaledW = (uint32_t)(srcW * scale);
+  uint32_t scaledH = (uint32_t)(srcH * scale);
+  if (scaledW > dstW)
+    scaledW = dstW;
+  if (scaledH > dstH)
+    scaledH = dstH;
+
+  // Center the scaled image
+  uint32_t offsetX = (dstW - scaledW) / 2;
+  uint32_t offsetY = (dstH - scaledH) / 2;
+
+  Serial.printf("Upscaling %dx%d -> %dx%d (scale=%.2f, offset=%d,%d)\n", srcW,
+                srcH, scaledW, scaledH, scale, offsetX, offsetY);
+
+  // Fill entire buffer with white first
+  for (uint32_t i = 0; i < dstW * dstH; i++) {
+    buffer[i] = 0xFFFF;
+  }
+
+  // Nearest-neighbor scale
+  for (uint32_t dy = 0; dy < scaledH; dy++) {
+    uint32_t srcY = (dy * srcH) / scaledH;
+    if (srcY >= srcH)
+      srcY = srcH - 1;
+    for (uint32_t dx = 0; dx < scaledW; dx++) {
+      uint32_t srcX = (dx * srcW) / scaledW;
+      if (srcX >= srcW)
+        srcX = srcW - 1;
+      buffer[(dy + offsetY) * dstW + (dx + offsetX)] =
+          srcCopy[srcY * srcW + srcX];
+    }
+  }
+
+  free(srcCopy);
+}
+
 static uint8_t findNearestColor(int r, int g, int b) {
   uint32_t minDistance = 0xFFFFFFFF;
   uint8_t nearestIndex = 1; // Default to white
@@ -228,6 +294,11 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::decodeJPG(uint8_t *data,
     return nullptr;
   }
 
+  // Scale up small images to fill the display
+  if (w < 1200 || h < 1600) {
+    scaleToFit(jpgRgb565Buffer, w, h);
+  }
+
   auto bitmaps = ditherImage(jpgRgb565Buffer, 1200, 1600);
   free(jpgRgb565Buffer);
   return bitmaps;
@@ -328,6 +399,13 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::decodePNG(File &file) {
     return nullptr;
   }
 
+  // Scale up small images to fill the display
+  int finalW = (imgW > 1200) ? 1200 : imgW;
+  int finalH = (imgH > 1600) ? 1600 : imgH;
+  if (finalW < 1200 || finalH < 1600) {
+    scaleToFit(pngRgb565Buffer, finalW, finalH);
+  }
+
   auto bitmaps = ditherImage(pngRgb565Buffer, 1200, 1600);
   free(pngRgb565Buffer);
   pngRgb565Buffer = nullptr;
@@ -366,6 +444,15 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::decodePNG(uint8_t *data,
     pngRgb565Buffer = nullptr;
     delete png;
     return nullptr;
+  }
+
+  // Scale up small images to fill the display
+  int pngW = png->getWidth();
+  int pngH = png->getHeight();
+  int finalW = (pngW > 1200) ? 1200 : pngW;
+  int finalH = (pngH > 1600) ? 1600 : pngH;
+  if (finalW < 1200 || finalH < 1600) {
+    scaleToFit(pngRgb565Buffer, finalW, finalH);
   }
 
   auto bitmaps = ditherImage(pngRgb565Buffer, 1200, 1600);
