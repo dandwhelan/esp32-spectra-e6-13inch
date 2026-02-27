@@ -229,5 +229,5 @@
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-log.h \
  .pio/libdeps/esp32s3/ESPAsyncWebServer/src/WebHandlerImpl.h \
  .pio/libdeps/esp32s3/ESPAsyncWebServer/src/WebResponseImpl.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src/SPIFFS.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src/LittleFS.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/HardwareSerial.h

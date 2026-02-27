@@ -1,10 +1,11 @@
 #include "ImageScreen.h"
 #include <Arduino.h>
 
+#include <LittleFS.h>
 #include <PNGdec.h>
-#include <SPIFFS.h>
 #include <TJpg_Decoder.h>
 #include <WiFi.h>
+
 
 #include "battery.h"
 #include <FS.h>
@@ -449,24 +450,24 @@ void ImageScreen::renderBitmaps(const ColorImageBitmaps &bitmaps) {
                      bitmaps.height, GxEPD_GREEN);
 }
 
-std::unique_ptr<ColorImageBitmaps> ImageScreen::loadFromSPIFFS() {
+std::unique_ptr<ColorImageBitmaps> ImageScreen::loadFromLittleFS() {
   const char *extensions[] = {".bmp", ".jpg", ".jpeg", ".png", ""};
   String baseName = "/local_image";
   String filename = "";
 
   for (const char *ext : extensions) {
-    if (SPIFFS.exists(baseName + ext)) {
+    if (LittleFS.exists(baseName + ext)) {
       filename = baseName + ext;
       break;
     }
   }
 
   if (filename == "") {
-    printf("No local image found on SPIFFS.\r\n");
+    printf("No local image found on LittleFS.\r\n");
     return nullptr;
   }
 
-  File file = SPIFFS.open(filename, FILE_READ);
+  File file = LittleFS.open(filename, FILE_READ);
   if (!file) {
     printf("Failed to open %s for reading.\r\n", filename.c_str());
     return nullptr;
@@ -478,7 +479,7 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::loadFromSPIFFS() {
 
   uint8_t *fileBuffer = (uint8_t *)ps_malloc(fileSize);
   if (!fileBuffer) {
-    printf("Failed to allocate %d bytes in PSRAM for SPIFFS image.\r\n",
+    printf("Failed to allocate %d bytes in PSRAM for LittleFS image.\r\n",
            fileSize);
     file.close();
     return nullptr;
@@ -492,7 +493,7 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::loadFromSPIFFS() {
            fileSize);
   }
 
-  printf("Passing local SPIFFS image to processImageData...\r\n");
+  printf("Passing local LittleFS image to processImageData...\r\n");
   auto bitmaps = processImageData(fileBuffer, bytesRead);
 
   free(fileBuffer);
@@ -506,11 +507,11 @@ void ImageScreen::render() {
   display.setFullWindow();
   display.fillScreen(GxEPD_WHITE);
 
-  SPIFFS.begin(true);
-  auto bitmaps = loadFromSPIFFS();
+  LittleFS.begin(true);
+  auto bitmaps = loadFromLittleFS();
 
   if (bitmaps) {
-    printf("Rendering local image from SPIFFS\r\n");
+    printf("Rendering local image from LittleFS\r\n");
     renderBitmaps(*bitmaps);
     displayBatteryStatus();
     displayWifiInfo();

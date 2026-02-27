@@ -1,6 +1,6 @@
 #include "ConfigurationServer.h"
 
-#include <SPIFFS.h>
+#include <LittleFS.h>
 #include <WiFi.h>
 #include <WiFiAP.h>
 
@@ -20,19 +20,19 @@ void ConfigurationServer::run(OnSaveCallback onSaveCallback, bool startAP) {
   Serial.print("Device Name: ");
   Serial.println(deviceName);
 
-  if (!SPIFFS.begin(true)) {
-    Serial.println("SPIFFS Mount Failed - filesystem must be uploaded first");
+  if (!LittleFS.begin(true)) {
+    Serial.println("LittleFS Mount Failed - filesystem must be uploaded first");
     return;
   }
-  Serial.println("SPIFFS initialized successfully");
+  Serial.println("LittleFS initialized successfully");
 
   if (!loadHtmlTemplate()) {
     Serial.println("Failed to load HTML template");
-    SPIFFS.end();
+    LittleFS.end();
     return;
   }
   Serial.println("HTML template loaded successfully");
-  SPIFFS.end();
+  LittleFS.end();
 
   if (startAP) {
     WiFi.disconnect(true);
@@ -144,13 +144,13 @@ void ConfigurationServer::setupWebServer() {
       });
 
   server->on("/clear", HTTP_POST, [this](AsyncWebServerRequest *request) {
-    if (SPIFFS.begin(true)) {
+    if (LittleFS.begin(true)) {
       const char *extensions[] = {".bmp", ".jpg", ".jpeg", ".png"};
       bool deleted = false;
       for (const char *ext : extensions) {
         String path = "/local_image" + String(ext);
-        if (SPIFFS.exists(path)) {
-          if (SPIFFS.remove(path)) {
+        if (LittleFS.exists(path)) {
+          if (LittleFS.remove(path)) {
             Serial.println("Deleted: " + path);
             deleted = true;
           }
@@ -162,11 +162,11 @@ void ConfigurationServer::setupWebServer() {
         request->send(200, "text/plain",
                       "No local image to clear. Rebooting...");
       }
-      SPIFFS.end();
+      LittleFS.end();
       delay(500);
       ESP.restart();
     } else {
-      request->send(500, "text/plain", "SPIFFS error");
+      request->send(500, "text/plain", "LittleFS error");
     }
   });
 
@@ -208,7 +208,7 @@ void ConfigurationServer::handleNotFound(AsyncWebServerRequest *request) {
 }
 
 bool ConfigurationServer::loadHtmlTemplate() {
-  File file = SPIFFS.open("/config.html", "r");
+  File file = LittleFS.open("/config.html", "r");
   if (!file) {
     Serial.println("Failed to open config.html file");
     return false;
@@ -259,19 +259,20 @@ void ConfigurationServer::handleUpload(AsyncWebServerRequest *request,
     }
 
     // Delete any existing local images first to avoid clutter
-    if (SPIFFS.begin(true)) {
+    if (LittleFS.begin(true)) {
       const char *extensions[] = {".bmp", ".jpg", ".jpeg", ".png"};
       for (const char *e : extensions) {
         String path = "/local_image" + String(e);
-        if (SPIFFS.exists(path))
-          SPIFFS.remove(path);
+        if (LittleFS.exists(path))
+          LittleFS.remove(path);
       }
     }
 
     String uploadPath = "/local_image" + ext;
-    uploadFile = SPIFFS.open(uploadPath, FILE_WRITE);
+    uploadFile = LittleFS.open(uploadPath, FILE_WRITE);
     if (!uploadFile) {
-      Serial.println("Failed to open " + uploadPath + " for writing in SPIFFS");
+      Serial.println("Failed to open " + uploadPath +
+                     " for writing in LittleFS");
     }
   }
 

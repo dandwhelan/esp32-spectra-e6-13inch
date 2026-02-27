@@ -230,7 +230,7 @@
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-log.h \
  .pio/libdeps/esp32s3/ESPAsyncWebServer/src/WebHandlerImpl.h \
  .pio/libdeps/esp32s3/ESPAsyncWebServer/src/WebResponseImpl.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src/SPIFFS.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src/LittleFS.h \
  src/ImageScreen.h .pio/libdeps/esp32s3/PNGdec/src/PNGdec.h \
  .pio/libdeps/esp32s3/PNGdec/src/zutil.h \
  .pio/libdeps/esp32s3/PNGdec/src/zlib.h \
@@ -241,7 +241,7 @@
  .pio/libdeps/esp32s3/TJpg_Decoder/src/User_Config.h \
  .pio/libdeps/esp32s3/TJpg_Decoder/src/tjpgd.h \
  .pio/libdeps/esp32s3/TJpg_Decoder/src/tjpgdcnf.h \
- C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src/LittleFS.h \
+ C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src/SPIFFS.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SD/src/SD.h \
  C:/Users/DanW/.platformio/packages/framework-arduinoespressif32/libraries/SD/src/sd_defines.h \
  src/HttpDownloader.h \
