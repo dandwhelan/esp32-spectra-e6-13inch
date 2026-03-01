@@ -28,10 +28,10 @@ Originally adapted from [shi-314/esp32-spectra-e6](https://github.com/shi-314/es
 ## Features
 
 - **6-colour rendering** — Black, White, Yellow, Red, Blue, Green via the Spectra 6 palette.
-- **Web-based image upload** — Upload JPEG, PNG, or BMP images through a browser; the display refreshes immediately.
-- **Floyd-Steinberg dithering** — Automatic colour quantization with error diffusion for natural-looking images on the limited 6-colour palette.
-- **Automatic image scaling** — Images smaller than 1200×1600 are upscaled via nearest-neighbour interpolation. Images larger than 1200×1600 are cropped to fit.
-- **Deep sleep** — After a 10-minute web server window, the device enters permanent deep sleep. Only a hardware power reset wakes it.
+- **Web-based image upload & rotation** — Upload JPEG, PNG, or BMP images through a browser or configure an HTTP folder to rotate through images.
+- **User-selectable dithering** — Choose between Floyd-Steinberg, Atkinson, Ordered (Bayer), or Nearest Neighbour (No Dithering) to render natural or stylized images on the 6-colour palette.
+- **Automatic image scaling (smart aspect ratio)** — Images smaller or larger than 1200×1600 are nearest-neighbour scaled in-place. Aspect ratios are preserved via automatic letterboxing/pillarboxing.
+- **Timed / Deep sleep** — The device can sleep indefinitely after configuring or wake at set intervals (15m, 30m, 1h, etc.) to cycle images. Only a hardware power reset wakes it from indefinite sleep.
 - **PSRAM-optimised** — All large buffers (framebuffer, decode buffers, dither bitmaps) are allocated in the ESP32-S3's 8 MB PSRAM.
 - **Dual-IC QSPI** — Custom `DisplayAdapter` bridges the manufacturer's C driver into an `Adafruit_GFX`-compatible API, handling the split framebuffer across two driver ICs.
 - **WiFi configuration portal** — First-boot Access Point mode with a web UI for entering WiFi credentials and an image URL.
@@ -166,12 +166,12 @@ Power On / Reset
       │       │    (auto-refresh display on new upload)
       │       │         │
       │       │         ▼
-      │       │    Enter permanent deep sleep
+      │       │    Enter deep sleep (wakes after configured interval, or permanent)
       │       │
       │       └── NO → Display stored image
       │                Start Access Point ("Framey-Config")
       │                Run config web portal for 10 minutes
-      │                Enter permanent deep sleep
+      │                Enter deep sleep
       │
       ▼
   Only a HARDWARE POWER RESET wakes the device
@@ -239,31 +239,32 @@ The ideal source image is **1200 × 1600 pixels** in portrait orientation. At th
 
 ### How Image Resizing Works
 
-The firmware handles images of any size — it will never reject an upload. Here's what happens depending on the uploaded image dimensions:
+The firmware handles images of any size natively via **in-place overlap-safe scaling algorithms** to fit everything within PSRAM without overflowing memory limits. It will never reject an upload.
 
 | Uploaded Image | What Happens |
 |---|---|
 | **Exactly 1200×1600** | Pixel-perfect — no scaling, no cropping |
-| **Smaller than 1200×1600** | **Upscaled** via nearest-neighbour interpolation to fill the display |
-| **Larger than 1200×1600** | **Cropped** to the top-left 1200×1600 pixels (no downscaling) |
-| **Different aspect ratio** | Scaled to fit within 1200×1600 while preserving aspect ratio, centred on a white background |
+| **Smaller than 1200×1600** | **Scaled up** to fit within the display boundaries |
+| **Larger than 1200×1600** | **Scaled down** to fit within the display boundaries |
+| **Different aspect ratio** | Scaled to fit within 1200×1600 while preserving aspect ratio, automatically letterboxed or pillarboxed with white bars. |
 
 **Upscaling detail (small images):**
 
-The `scaleToFit()` function in `ImageScreen.cpp` performs nearest-neighbour upscaling:
+The `scaleToFit()` function in `ImageScreen.cpp` performs mathematically bounded in-place scaling without allocating a second full temporary buffer:
 
 1. Calculate the scale factor: `scale = min(1200/srcWidth, 1600/srcHeight)`
 2. Compute the scaled dimensions while maintaining the original aspect ratio
 3. Centre the scaled image in the 1200×1600 buffer (white bars on any unused edges)
-4. For each destination pixel, map back to the nearest source pixel — no blurring or interpolation artefacts
+4. For each destination pixel, map back to the nearest source pixel using mathematical shift overlaps — no blurring or interpolation artefacts
 
-For example, a **450×800** image (from a web thumbnail) would be scaled by a factor of **2×**, producing a **900×1600** image centred horizontally with 150px white bars on each side.
+### How Dithering Works
 
-> **Tip:** For the best quality, always upload images at **1200×1600**. Upscaling a small image will show visible pixelation. Use any image editor (or an online tool) to resize and crop your photos beforehand.
+E-Ink Spectra 6 displays can only show **6 discrete colours**. A typical photograph contains millions of colours, so the firmware must **quantise** every pixel to one of the 6 available colours. The firmware supports multiple Dithering algorithms to handle this quantisation depending on the photographic style:
 
-### How Floyd-Steinberg Dithering Works
-
-E-Ink Spectra 6 displays can only show **6 discrete colours**. A typical photograph contains millions of colours, so the firmware must **quantise** every pixel to one of the 6 available colours. Naïve quantisation (just picking the closest colour) produces harsh, banded transitions. **Floyd-Steinberg error diffusion** dramatically improves this by spreading the "error" (the difference between the original colour and the chosen colour) to neighbouring pixels.
+- **Floyd-Steinberg** (Default): Spreads "error" (difference between original colour and the chosen colour) to neighbouring pixels creating smooth transitions and natural photographs.
+- **Atkinson**: Diffuses only a fraction of the error, reducing noise but creating higher-contrast, punchier images.
+- **Ordered (Bayer 8x8)**: Uses a static threshold matrix to decide colour. Creates distinct, stylised crosshatch patterns and completely avoids the "colour bleed" effect found in error-diffusion algorithms.
+- **None (Nearest Colour)**: Simply picks the closest mathematical colour with no dithering. Useful for vector art, charts, or pre-dithered images.
 
 **The Spectra 6 Palette (RGB values):**
 
@@ -351,10 +352,10 @@ const char DEFAULT_IMAGE_URL[] = "https://example.com/image.png";
 1. Device boots and connects to your WiFi
 2. Displays the stored image immediately
 3. Web server runs for **10 minutes** at the device's IP address (shown in serial monitor)
-4. Upload images via the web portal at `http://<device-ip>`
-5. Display refreshes automatically after each upload
-6. After 10 minutes, device enters **permanent deep sleep** (image stays on screen)
-7. **Power reset** (unplug and replug, or press the reset button) to restart the cycle
+4. Configure options or upload local images via the web portal at `http://<device-ip>`
+5. Display refreshes automatically after each image upload
+6. After 10 minutes, device enters **deep sleep** (image stays on screen)
+7. It will wake up according to the **Wake From Sleep** interval configured in the web UI. If set to **Never**, only a hardware power reset wakes the device. Note the sleep timer runs from the end of the previous refresh, preserving power in a zero-battery-drain state.
 
 ---
 
