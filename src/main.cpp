@@ -6,6 +6,7 @@
 #include "ConfigurationServer.h"
 #include "DisplayAdapter.h"
 #include "ImageScreen.h"
+#include "SDCardManager.h"
 #include "WiFiConnection.h"
 #include "battery.h"
 #include <SPI.h>
@@ -62,6 +63,13 @@ void setup() {
   fflush(stdout);
 
   initializeDefaultConfig();
+
+  // --- SD Card Phase ---
+  // The SD card shares SPI pins with the display, so we access it FIRST
+  // (before the display driver initialises the SPI bus). If an image is
+  // found it is copied to LittleFS; the SPI bus is then fully released
+  // so the display can claim it later.
+  copyImageFromSDToLittleFS();
 
   // Connect to WiFi
   if (appConfig->hasValidWiFiCredentials()) {
