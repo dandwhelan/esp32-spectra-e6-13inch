@@ -26,8 +26,6 @@ void initializeDefaultConfig() {
   std::unique_ptr<ApplicationConfig> storedConfig = configStorage.load();
   if (storedConfig) {
     appConfig = std::move(storedConfig);
-    // Force FILL mode — user can change via web UI if needed
-    appConfig->scalingMode = SCALE_FILL;
     printf("Configuration loaded from persistent storage: \r\n");
     printf("  - WiFi SSID: %s\n", appConfig->wifiSSID);
     printf("  - Scaling mode: %s\n",

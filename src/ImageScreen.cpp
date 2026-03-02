@@ -1022,7 +1022,13 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::loadFromFolder() {
     if (result && result->httpCode == HTTP_CODE_OK && result->data) {
       Serial.printf("Folder: processing pinned image (%d bytes)\n",
                     result->size);
-      auto bitmaps = processImageData(result->data, result->size);
+      // Cache data locally then free download buffer to reclaim PSRAM
+      // before the RGB565 decode buffer (3.8MB) is allocated
+      size_t dataSize = result->size;
+      uint8_t *data = result->data;
+      result->data = nullptr; // Prevent DownloadResult destructor double-free
+      auto bitmaps = processImageData(data, dataSize);
+      free(data); // Safe: we own this pointer now
       if (bitmaps)
         return bitmaps;
     }
@@ -1042,7 +1048,13 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::loadFromFolder() {
   }
 
   printf("Folder: processing image (%d bytes)\r\n", result->size);
-  return processImageData(result->data, result->size);
+  // Free download buffer before decode to reclaim PSRAM
+  size_t dataSize = result->size;
+  uint8_t *data = result->data;
+  result->data = nullptr; // Prevent DownloadResult destructor double-free
+  auto bitmaps = processImageData(data, dataSize);
+  free(data);
+  return bitmaps;
 }
 
 void ImageScreen::render() {

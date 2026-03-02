@@ -18,15 +18,25 @@ enum DitherMode : uint8_t {
   DITHER_NONE = 3,
 };
 
+// Image Scaling Options
+enum ScalingMode : uint8_t {
+  SCALE_FIT = 0,  // Letterbox: keep entire image visible
+  SCALE_FILL = 1, // Crop: completely fill screen, cutting off edges
+};
+
 struct ApplicationConfig {
   char wifiSSID[64];
   char wifiPassword[64];
   char imageUrl[300];
-  char folderUrl[300];        // HTTP folder URL for image cycling
-  char pinnedImageUrl[300];   // Full URL of a pinned folder image (empty = cycling)
-  uint8_t ditherMode;         // DitherMode enum value
-  uint16_t sleepMinutes;      // 0 = no timed wake (permanent sleep after server timeout)
-  uint16_t imageChangeMinutes; // How often to advance to the next image (0 = every wake)
+  char folderUrl[300];      // HTTP folder URL for image cycling
+  char pinnedImageUrl[300]; // Full URL of a pinned folder image (empty =
+                            // cycling)
+  uint8_t ditherMode;       // DitherMode enum value
+  uint8_t scalingMode;      // ScalingMode enum value (0=fit, 1=fill)
+  uint16_t
+      sleepMinutes; // 0 = no timed wake (permanent sleep after server timeout)
+  uint16_t imageChangeMinutes; // How often to advance to the next image (0 =
+                               // every wake)
 
   static const int DISPLAY_ROTATION = 2;
 
@@ -42,11 +52,14 @@ struct ApplicationConfig {
     strncpy(imageUrl, DEFAULT_IMAGE_URL, sizeof(imageUrl) - 1);
 
     ditherMode = DITHER_FLOYD_STEINBERG;
+    scalingMode = SCALE_FIT; // Default to fit/letterbox (preserve entire image)
     sleepMinutes = 0;
     imageChangeMinutes = 30;
   }
 
-  bool hasValidWiFiCredentials() const { return strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0; }
+  bool hasValidWiFiCredentials() const {
+    return strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0;
+  }
   bool hasFolderUrl() const { return strlen(folderUrl) > 0; }
   bool hasPinnedImage() const { return strlen(pinnedImageUrl) > 0; }
 };
