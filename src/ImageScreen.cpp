@@ -554,9 +554,7 @@ std::unique_ptr<ColorImageBitmaps> ImageScreen::decodeJPG(uint8_t *data,
   else if (scale_option == 3)
     decode_options = JPEG_SCALE_EIGHTH;
 
-  Serial.printf(
-      "JPEG Original Size: %dx%d, Pre-scaling: 1/%d, Progressive: %s\n", w, h,
-      scale, jpg.isProgressive() ? "Yes" : "No");
+  Serial.printf("JPEG Original Size: %dx%d, Pre-scaling: 1/%d\n", w, h, scale);
 
   w /= scale;
   h /= scale;
